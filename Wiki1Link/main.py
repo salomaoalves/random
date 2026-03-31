@@ -1,0 +1,47 @@
+import ingestion, path, summary, graph_visu
+
+## Welcome mensage - the begin of the program
+def print_welcome():
+    print('********************************************************************************************************************')
+    print('******************************* Welcome to Wiki1Link ***************************************************************')
+    print('********************************************************************************************************************')
+    print()
+    print('----------------------------------Costum Ingestion------------------------------------------------------------------')
+    print('Need to write a sourced word and it\'s Wikipedia URL suffix!')
+    print('\te.g. "...wikipedia.org/wiki/Oi_(empresa)" the suffix will be "Oi_(empresa)".')
+    print('The suffix is optional, if None is passed, it will search the first example founded in the Wikipedia Search!!!')
+    print()
+    print('-----------------------------------Auto Ingestion-------------------------------------------------------------------')
+    print('It\'ll read all blue word from a given wikipedia link, if is None, it will read from the Philosophy page!')
+    print('All the blue word will have it\'s words extract!!')
+    print()
+    print('------------------------------------View Paths----------------------------------------------------------------------')
+    print('It\'ll show the path between two words and, for each one, to the Philosophy.')
+    print('Along with other informations related to the path.')
+    print()
+    print('---------------------------------Summary Statistics-----------------------------------------------------------------')
+    print('Show general information about the graph - like degrees, isolates nodes, loops, ...')
+    print('Also, can input N words to show some infos, like it\'s degree, precceder and successor nodes, ...')
+    print('Also related to the words inputed, info about the path between then is displayed.')
+    print()
+    print('------------------------------------Graph Display--------------------------------------------------------------------')
+    print('It\'ll print all the graph.')
+
+def main():
+    print_welcome()
+    while 1:
+        print('Select one of the feature below:')
+        print('\t1 - Costum Ingestion of Words')
+        print('\t2 - Auto Ingestion of Words')
+        print('\t3 - Path between nodes')
+        print('\t4 - Summary Statistics')
+        print('\t5 - Graph Visualization')
+        print('\tOther - To Exit the Application')
+        feature = input('Feature Number: ')
+        if feature=='1': ingestion.costum_ingestion()
+        elif feature=='2': ingestion.auto_ingestion()
+        elif feature=='3': path.view_paths()
+        elif feature=='4': summary.summary_stats()
+        elif feature=='5': graph_visu.show_graphics()
+        else: break
+main()

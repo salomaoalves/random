@@ -1,0 +1,2 @@
+word,href,language,data,url,err
+word,,lang,DATA_ATUAL,url,TimeoutException

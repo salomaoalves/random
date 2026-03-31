@@ -1,0 +1,45 @@
+
+This projects is about this: if you click in the first hyperlink (has some rules that should be followed) of a Wikipedia page, and continuous doing that, you will, probably, ending in the Philosophy page or in a loop. So, I scrape many hyperlink/blue word and, with the help of Neo4J, store and query them.
+
+The project is a application, that can be started in **main.py**, to execute all this functionality; you can divide it in 5 parts: Costum Ingestion, Auto Ingestion, View Paths, Summary and Graph Display. 
+
+So, from the main script, you are able to call the web scraping functions to gather data *Custom/Auto Ingestion*, get graph and nodes information *View Path and Summary* and also has a visualization about the graph *Graph Display*.
+
+
+## ETL
+Contain the python code responsible to scrape the data from wikipedia and the Neo4J functions to work with the data.
+
+*ConnectError.csv* is a csv file responsible to store the error when a selenium connection go wrong.
+
+*autoWords.py* will make a connection to a wiki page (the link can be passed or use a default one), get the html and than extract a bunch of words and its suffix links, return them.
+
+*common.py* common functions and constants used during the code.
+
+*connection.py* functions responsible to make the selenium connection - save when a connection error happen.
+
+*extractWords.py* will make a connection to a wiki page from a given word, extract the next posible word/node (function `get_word()`), valid it (if not valid, look for another) - continue this flow until a Stop Conditions happen (is a loop or hit Philosophy).
+
+*neo4jFunc.py* has functions that will, using Cypher language, get nodes, paths and loops, insert pair of nodes to build the graph, and delete nodes. To work, you gonna have two functions for each action, the main one, which will create the session, and a auxiliar one, where the cypher language is used to work with the data.
+
+## common.py
+With common and diferents functions used during many files.
+
+## createFakeData.py
+Python script responsible to create and store the fake data used to test the application.
+
+## graph_visu.py
+Python functions that will read all nodes, get the main graph and the loops and than display them - use lib **NetworkX** to help display the graph and Neo4J functions to get the graph and loops.
+
+## ingestion.py
+Responsible to collect the data and build/ingest the graph, allways starting with a word. Has two main functions; *
+  - 1. `auto_ingestion()`, call **ETL/autoWords.py** to get some random words, and, for each one of them, call **ETL/extractWords.py** to get the graph from them, than insert it
+  - 2. `costum_ingestion()`, from a inputed word, call **ETL/extractWords.py** to get the graph of it
+
+## main.py
+Main script, it will create a prompt in terminal with better layout, in there you will have a short description and explanation about the project and how it works and than you can start it - control the project throw a Menu.
+
+## path.py
+Has functions related to path info, that is, given two words, show the path between than, to the word Philosophy, if the word belong to a loop and others statistics, like degrees, size.
+
+## summary.py
+Has the functions responsible to generate a summary - graph degrees, loops, precceder/successor nodes, path between nodes. With the help of Cypher, I was able to read the data and manipulate it - make filters, aggregations and so on.
