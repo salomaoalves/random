@@ -4,10 +4,14 @@ sys.path.append(raiz)
 import config 
 
 
+'''list the lastest music/tracks that was played by the user'''
+
+n_lastest = 50
+
 sp = config.connect(scope = 'user-read-recently-played')
 
 # Search for recent history
-recent_tracks = sp.current_user_recently_played(limit=50)
+recent_tracks = sp.current_user_recently_played(limit=n_lastest)
 
 
 # show results in terminal
