@@ -12,6 +12,7 @@ def all_playlists_info(AMOUNT=5):
 
     for i, item in enumerate(results['items']):
         print(str(i+1) + '.  name: ', item['name'])
+        print('     created by: ', item['owner']['display_name'])
         print('     desc: ', item['description'])
         print('     total songs: ', item['tracks']['total'])
         print('---------')
