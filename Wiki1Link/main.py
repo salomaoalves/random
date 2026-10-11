@@ -44,4 +44,7 @@ def main():
         elif feature=='4': summary.summary_stats()
         elif feature=='5': graph_visu.show_graphics()
         else: break
-main()
+
+if __name__ == '__main__':
+    main()
+

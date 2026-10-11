@@ -1,0 +1,6 @@
+beautifulsoup4
+matplotlib
+neo4j>=5.8
+networkx
+requests
+scipy

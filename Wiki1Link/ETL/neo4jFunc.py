@@ -1,39 +1,60 @@
+import os
 from neo4j import GraphDatabase
-from neo4j.exceptions import ServiceUnavailable
+from neo4j.exceptions import ServiceUnavailable, AuthError
 from ETL import common
 
+_driver = None
+
 def create_drive():
-    '''create connection with local database'''
+    '''create connection with local database - only once, then reuse it
+        set NEO4J_URI, NEO4J_USER and NEO4J_PASSWORD to change the defaults'''
+    global _driver
+    if _driver is not None:
+        return _driver
 
     # Database information
-    connectionString = "neo4j://localhost:7687"
-    username, psw = '***', '****'
+    connectionString = os.environ.get('NEO4J_URI', 'neo4j://localhost:7687')
+    username = os.environ.get('NEO4J_USER', 'neo4j')
+    psw = os.environ.get('NEO4J_PASSWORD', 'neo4j')
 
     # Make and test the connection
-    driver = GraphDatabase.driver(connectionString, auth=(username,psw))
+    driver = GraphDatabase.driver(connectionString, auth=(username,psw),
+                                  notifications_min_severity='OFF')
     try:
         driver.verify_connectivity()
-    except ServiceUnavailable as err:
+    except (ServiceUnavailable, AuthError) as err:
         print(err)
-        exit()
+        exit(f'Could not connect to Neo4j at {connectionString} - check NEO4J_URI, NEO4J_USER and NEO4J_PASSWORD.')
 
+    _driver = driver
     return driver
 
 
-# Auxiliar Write Transactions 
+def label(lang):
+    '''node label for a database type - escaped to be used in Cypher'''
+    return '`' + lang.replace('`', '') + '`'
+
+
+def rel_type(lang):
+    '''relationship type for a database type - escaped to be used in Cypher'''
+    return '`' + lang.replace('`', '') + '_link`'
+
+
+# Auxiliar Write Transactions
 def create_node(tx, word, date, lang):
-    '''create one simple node'''
+    '''create one simple node - if it doesn't exist'''
     tx.run(
-        f"CREATE (:{lang} "+"{word: $word, date: $date})",
+        f"MERGE (n:{label(lang)} "+"{word: $word}) "
+        "ON CREATE SET n.date = $date",
         word=word, date=date
     )
 
 def create_rel(tx, snode, dnode, lang):
-    '''creates a directed relantionship between two nodes'''
+    '''creates a directed relantionship between two nodes - if it doesn't exist'''
     tx.run(
-        f"MATCH (ns:{lang}) WHERE ns.word=$snode "
-        f"MATCH (dn:{lang}) WHERE dn.word=$dnode "
-        f"CREATE (ns)-[r:{lang}_link]->(dn)",
+        f"MATCH (ns:{label(lang)}) WHERE ns.word=$snode "
+        f"MATCH (dn:{label(lang)}) WHERE dn.word=$dnode "
+        f"MERGE (ns)-[r:{rel_type(lang)}]->(dn)",
     snode=snode,dnode=dnode)
 
 
@@ -41,73 +62,54 @@ def create_rel(tx, snode, dnode, lang):
 def read_all_node(tx, lang):
     '''read all graph nodes'''
     word = []
-    for r in tx.run(f"MATCH (node:{lang}) "
-                     "RETURN node"):
-        word.append(r['node']['word'])
+    for r in tx.run(f"MATCH (node:{label(lang)}) "
+                     "RETURN node.word AS word"):
+        word.append(r['word'])
     return word
 
-def read_path_between(tx, word1, word2, dict_node, lang):
+def read_path_between(tx, word1, word2, lang):
     '''find a path between two nodes and return a list of nodes
         (the path) and the numb of edges; if not, return "not_found"'''
-    path = [word1]
-    try:
-        for resp in tx.run(f"MATCH (n1:{lang}) "
-                        f"MATCH (n2:{lang}) "
-                        f"MATCH (n1)-[r:{lang}_link*]->(n2) "
-                            "WHERE n1.word=$w1 "
-                            "AND n2.word=$w2 "
-                            "RETURN r",w1=word1,w2=word2):
-            size = len(resp['r'])
-            for rr in resp['r']: # to get the nodes name in the path
-                path.append(dict_node[rr.end_node.id])
-        return path, size
-    except UnboundLocalError:
+    resp = tx.run(f"MATCH p=(n1:{label(lang)})-[:{rel_type(lang)}*1..]->(n2:{label(lang)}) "
+                   "WHERE n1.word=$w1 "
+                   "AND n2.word=$w2 "
+                   "RETURN [n IN nodes(p) | n.word] AS path "
+                   "ORDER BY length(p) LIMIT 1",w1=word1,w2=word2).single()
+    if resp is None:
         return 'not_found'
-
-def read_all_id_node(tx, lang):
-    '''read all nodes id and create a dict from it
-        *keys: node id
-        *value: node name'''
-    nodes = {}
-    for resp in tx.run(f"MATCH (n1:{lang}) "
-                        "RETURN n1, ID(n1) AS id"):
-        nodes.update({resp['id']: resp['n1']['word']})
-    return nodes
+    return resp['path'], len(resp['path'])-1
 
 def read_all(tx, lang):
     '''read all edges (pair of nodes) of the graph'''
     edges = []
-    for resp in tx.run( f"MATCH (n1:{lang}) "
-                        f"MATCH (n2:{lang}) "
-                        f"MATCH (n1)-[r:{lang}_link]->(n2) "
-                        "RETURN n1, n2"):
-        edges.append((resp['n1']['word'],resp['n2']['word']))
+    for resp in tx.run( f"MATCH (n1:{label(lang)})-[r:{rel_type(lang)}]->(n2:{label(lang)}) "
+                        "RETURN n1.word AS n1, n2.word AS n2"):
+        edges.append((resp['n1'],resp['n2']))
     return edges
 
-def read_loops(tx, dict_node, lang):
+def read_all_isolated(tx, lang):
+    '''read all nodes without any relationship'''
+    return [r['word'] for r in tx.run(f"MATCH (n:{label(lang)}) "
+                                      f"WHERE NOT (n)-[:{rel_type(lang)}]-() "
+                                      "RETURN n.word AS word")]
+
+def read_loops(tx, lang):
     '''read all loops find in the graph'''
-    loops = [[]]
-    for resp in tx.run( f"MATCH (n1:{lang}) "
-                        f"MATCH (n2:{lang}) "
-                        f"MATCH (n1)-[r:{lang}_link*]->(n2) "
-                        f"WHERE n2.word=n1.word "
-                        "RETURN n1, r"):
-        loop, check_loop = [resp['n1']['word']], True
-        for rr in resp['r']: #get loops nodes
-            loop.append(dict_node[rr.end_node.id])
-        for i in range(len(loops)): #eliminates duplicates
-            check_loop = check_loop and (loop[0] not in loops[i])
-        if check_loop:
+    loops = []
+    for resp in tx.run( f"MATCH p=(n1:{label(lang)})-[:{rel_type(lang)}*1..]->(n1) "
+                        "RETURN [n IN nodes(p) | n.word] AS loop"):
+        loop = resp['loop']
+        if all(loop[0] not in l for l in loops): #eliminates duplicates
             loops.append(loop)
-    return loops[1:]
+    return loops
 
 
 # Auxiliar Delete Transactions
 def del_node(tx, lang, word):
     '''delete a specific node'''
     tx.run(
-        f"MATCH (node:{lang}) WHERE node.word=$word "
-        "DELETE node;"
+        f"MATCH (node:{label(lang)}) WHERE node.word=$word "
+        "DETACH DELETE node;"
     , word=word)
 
 
@@ -116,10 +118,8 @@ def creat_stopWord_nodes():
     '''create Stop Word node for each database type - en, pt and es'''
     driver = create_drive()
     with driver.session() as session:
-        session.write_transaction(create_node, common.get_stop_word('en'), common.DATA_ATUAL, 'en')
-        session.write_transaction(create_node, common.get_stop_word('pt'), common.DATA_ATUAL, 'pt')
-        session.write_transaction(create_node, common.get_stop_word('es'), common.DATA_ATUAL, 'es')
-        session.close()
+        for lang in ['en', 'pt', 'es']:
+            session.execute_write(create_node, common.get_stop_word(lang), common.DATA_ATUAL, lang)
 
 def insert_nodes(vert, lang):
     '''do the ingestion of some words
@@ -130,16 +130,11 @@ def insert_nodes(vert, lang):
     driver = create_drive()
     with driver.session() as session:
 
-        # Create the node for the first word
-        session.write_transaction(create_node, vert[0], common.DATA_ATUAL, lang)
-        
-        # Create the relationships and the nodes for the destiny node
-        for i in range(1,len(vert)-1):
-            session.write_transaction(create_node, vert[i], common.DATA_ATUAL, lang)
-            session.write_transaction(create_rel, vert[i-1], vert[i], lang)
-        session.write_transaction(create_rel, vert[-2], vert[-1], lang)
-
-        session.close()
+        # Create the nodes and the relationships between them
+        session.execute_write(create_node, vert[0], common.DATA_ATUAL, lang)
+        for i in range(1,len(vert)):
+            session.execute_write(create_node, vert[i], common.DATA_ATUAL, lang)
+            session.execute_write(create_rel, vert[i-1], vert[i], lang)
 
 
 # Read Custom Funcs
@@ -149,34 +144,16 @@ def get_all_nodes(lang):
 
     driver = create_drive()
     with driver.session() as session:
-        result = session.read_transaction(read_all_node, lang)
-        session.close()
+        return session.execute_read(read_all_node, lang)
 
-    return result
-
-def get_path_between(word1, word2, dict_node, lang):
+def get_path_between(word1, word2, lang):
     '''read path between two defined nodes
         @word1/word2: start and end node of the path
-        @dict_node: a dict with node id and name
         @lang: database type'''
 
     driver = create_drive()
     with driver.session() as session:
-        result = session.read_transaction(read_path_between, word1, word2, dict_node, lang)
-        session.close()
-
-    return result
-
-def get_all_id_nodes(lang):
-    '''read all id nodes, creating a dict with it's id (key) and name (value)
-        @lang: database type'''
-
-    driver = create_drive()
-    with driver.session() as session:
-        result = session.read_transaction(read_all_id_node, lang)
-        session.close()
-
-    return result
+        return session.execute_read(read_path_between, word1, word2, lang)
 
 def get_all(lang):
     '''read all the edges, useful to create the total graph
@@ -184,19 +161,20 @@ def get_all(lang):
 
     driver = create_drive()
     with driver.session() as session:
-        result = session.read_transaction(read_all, lang)
-        session.close()
+        return session.execute_read(read_all, lang)
 
-    return result
-
-def get_loops(lang, dict_node):
-    '''read all graph loops
-        @lang: database type
-        @dict_node: a dict with node id and name'''
+def get_all_isolated(lang):
+    '''read all nodes without relationship, they aren't in the edges
+        @lang: database type'''
 
     driver = create_drive()
     with driver.session() as session:
-        result = session.read_transaction(read_loops, dict_node, lang)
-        session.close()
+        return session.execute_read(read_all_isolated, lang)
 
-    return result
+def get_loops(lang):
+    '''read all graph loops
+        @lang: database type'''
+
+    driver = create_drive()
+    with driver.session() as session:
+        return session.execute_read(read_loops, lang)

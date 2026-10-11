@@ -1,23 +1,55 @@
-import pandas as pd
+import csv
+import os
 import time
+from urllib.parse import unquote
+
+import requests
 
 from ETL import common
-from bs4 import BeautifulSoup
 
-from selenium.webdriver import Chrome, Firefox, FirefoxOptions
-from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.chrome.options import Options
-from selenium.common.exceptions import TimeoutException
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
+ERROR_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'ConnectError.csv')
+N_TRIES, WAIT_SECONDS, TIMEOUT = 3, 10, 30
 
-def save_bq(df):
+
+def save_bq(row):
     '''save possibles connection erros in a CSV file - ConnectError
-        @df: dataframe with the erros'''
-    stored_err = pd.read_csv('./ConnectError.csv')
-    new_df = pd.concat([df,stored_err])
-    new_df.to_csv('./ConnectError.csv',index=False)
+        @row: dict with the error'''
+    fields = ['word', 'href', 'language', 'data', 'url', 'err']
+    write_header = not os.path.exists(ERROR_FILE)
+    with open(ERROR_FILE, 'a', newline='') as f:
+        writer = csv.DictWriter(f, fieldnames=fields)
+        if write_header:
+            writer.writeheader()
+        writer.writerow(row)
+
+
+def request(lang, word, suffix, url, params=None):
+    '''make a GET request - it'll try 3 times, if didn't work it'll
+        save a error in the CSV file and return None
+        @lang: database type / wiki language
+        @word: word to be search
+        @suffix: last word of a wiki link - related with the word
+        @url: the url
+        @params: query string params'''
+    err = ''
+    for counter in range(N_TRIES):
+        try:
+            resp = requests.get(url, params=params, timeout=TIMEOUT,
+                                headers={'User-Agent': common.USER_AGENT})
+            if resp.status_code == 200:
+                return resp
+            err = f'HTTP {resp.status_code}'
+            if resp.status_code == 404: #page doesn't exist, no reason to try again
+                break
+        except requests.RequestException as e:
+            err = type(e).__name__
+        if counter < N_TRIES-1:
+            time.sleep(WAIT_SECONDS)
+
+    save_bq({'word': word, 'href': suffix, 'language': lang,
+             'data': common.DATA_ATUAL, 'url': url, 'err': err})
+    print(f'\tErros salvos em: {ERROR_FILE}')
+    return None
 
 
 def connect(lang, word, suffix, url=''):
@@ -27,134 +59,31 @@ def connect(lang, word, suffix, url=''):
         @suffix: last word of a wiki link - related with the word
         @url: a possible url to use - if empty, use suffix'''
 
-    # Check lang
-    if lang not in ['en','pt','es']:
-        lang = 'en'
+    lang = common.get_wiki_lang(lang)
 
     # Get the link
     if url=='':
         url = 'https://' + lang + '.wikipedia.org/wiki/' + suffix
     print(f'\tBegining search on {word} on url - {url}')
 
-    # Make the connection - it'll try 3 times (every 120 seconds), if didn't work it'll
-    #   save a error in the CSV file and return empty - no connection make
-    if common.IS_FIREFOX:
-        options = FirefoxOptions()
-        options.set_headless()
-        with Firefox(executable_path=r'/home/salomao/DSProject/Wiki1Link/ETL/geckodriver', firefox_options=options) as browser:
-            counter = 0
-            while counter<3:
-                browser.get(url)
-                counter += 1
-                try:
-                    WebDriverWait(browser, 500).until(EC.visibility_of_element_located((By.ID, "bodyContent")))
-                except TimeoutException:
-                    if counter == 3: #save errors and return empty
-                        df = pd.DataFrame({'word': word, 'href': suffix, 'language': lang, 
-                                        'data': common.DATA_ATUAL, 'url': url,
-                                        'err': 'TimeoutException'}, index=[0])
-                        save_bq(df)
-                        print('Erros salvos em: err')
-                        return ''
-                    time.sleep(120)
-                    continue
-                break 
-            return browser.page_source
-    if common.IS_CHROME:
-        options = Options()
-        options.add_argument('--headless')
-        with Chrome('chromedriver', options=options) as browser:
-            counter = 0
-            while counter<3:
-                browser.get(url)
-                counter += 1
-                try:
-                    WebDriverWait(browser, 500).until(EC.visibility_of_element_located((By.ID, "bodyContent")))
-                except TimeoutException:
-                    if counter == 3: #save errors and return empty
-                        df = pd.DataFrame({'word': word, 'href': suffix, 'language': lang, 
-                                        'data': common.DATA_ATUAL, 'url': url,
-                                        'err': 'TimeoutException'}, index=[0])
-                        save_bq(df)
-                        print('Erros salvos em: err')
-                        return ''
-                    time.sleep(120)
-                    continue
-                break 
-            return browser.page_source
+    resp = request(lang, word, suffix, url)
+    return resp.text if resp is not None else ''
 
-def get_possible_pages(browser, word):
-    # Search for the possible page
-    browser.find_element_by_name('search').send_keys(word)
-    time.sleep(3)
-    browser.find_element_by_name('search').send_keys(Keys.ENTER)
-    time.sleep(3)
-    
-    # Extract the possible suffix from the page
-    soup = BeautifulSoup(browser.page_source, "html.parser")
-    suffix = soup.find("link", {'rel': 'alternate'})['href'].split('/')[-1]
-    
-    return suffix
 
 def get_suffix(lang, word):
-    '''search for the wikipedia suffix from a given word
+    '''search for the wikipedia suffix from a given word - uses the
+        Wikipedia search, that redirects to the article when it exists
         @lang: database type / wiki language
         @word: word to be search'''
 
-    # Check lang
-    if lang not in ['en','pt','es']:
-        lang = 'en'
-
-    # Get main wikipedia link
-    url = 'https://' + lang + '.wikipedia.org'
+    lang = common.get_wiki_lang(lang)
+    url = 'https://' + lang + '.wikipedia.org/w/index.php'
     print(f'\tBegining search for the {word}\'s code...')
 
-    # Make the connection with Firefox - has three chances and save the erros (same as above)
-    if common.IS_FIREFOX:    
-        options = FirefoxOptions()
-        options.set_headless()
-        with Firefox(executable_path=r'/home/salomao/DSProject/Wiki1Link/ETL/geckodriver', firefox_options=options) as browser:
-            counter = 0
-            while counter<3:
-                browser.get(url)
-                counter += 1
-                try:
-                    WebDriverWait(browser, 500).until(EC.visibility_of_element_located((By.ID, "searchform")))
-                except TimeoutException:
-                    if counter == 3: #save errors and return empty
-                        df = pd.DataFrame({'word': word, 'href': '', 'language': lang, 
-                                        'data': common.DATA_ATUAL, 'url': url,
-                                        'err': 'TimeoutException'}, index=[0])
-                        save_bq(df)
-                        print('Erros salvos em: err')
-                        return ''
-                    time.sleep(120)
-                    continue
-                break
-            
-            return get_possible_pages(browser, word)
-    
-    # Make the connection with Chrome- has three chances and save the erros (same as above)
-    if common.IS_CHROME:
-        options = Options()
-        options.add_argument('--headless')
-        with Chrome('./chromedriver1', options=options) as browser:
-            counter = 0
-            while counter<3:
-                browser.get(url)
-                counter += 1
-                try:
-                    WebDriverWait(browser, 500).until(EC.visibility_of_element_located((By.ID, "searchform")))
-                except TimeoutException:
-                    if counter == 3: #save errors and return empty
-                        df = pd.DataFrame({'word': word, 'href': '', 'language': lang, 
-                                        'data': common.DATA_ATUAL, 'url': url,
-                                        'err': 'TimeoutException'}, index=[0])
-                        save_bq(df)
-                        print('Erros salvos em: err')
-                        return ''
-                    time.sleep(120)
-                    continue
-                break
-            
-            return get_possible_pages(browser, word)
+    resp = request(lang, word, '', url, params={'search': word, 'go': 'Go'})
+    if resp is None or '/wiki/' not in resp.url:
+        return ''
+    suffix = resp.url.split('/wiki/')[-1].split('#')[0]
+    if unquote(suffix).startswith('Special:'): #search result page - no article found
+        return ''
+    return suffix

@@ -6,16 +6,27 @@ The project is a application, that can be started in **main.py**, to execute all
 So, from the main script, you are able to call the web scraping functions to gather data *Custom/Auto Ingestion*, get graph and nodes information *View Path and Summary* and also has a visualization about the graph *Graph Display*.
 
 
+## How to run
+1. Start a Neo4j 5 database (e.g. `docker run -p 7687:7687 -e NEO4J_AUTH=neo4j/password neo4j:5`).
+2. Install the dependencies: `pip install -r requirements.txt`.
+3. Set the database connection (defaults: `neo4j://localhost:7687`, user `neo4j`, password `neo4j`):
+   `export NEO4J_URI=neo4j://localhost:7687 NEO4J_USER=neo4j NEO4J_PASSWORD=password`
+4. Optional - create the fake data (language option *4 - Fake Data* in the menu): `python createFakeData.py`
+5. Start the application from this folder: `python main.py`
+
+The nodes are the Wikipedia page titles (after redirects), so different link texts to the same page are the same node.
+
+
 ## ETL
 Contain the python code responsible to scrape the data from wikipedia and the Neo4J functions to work with the data.
 
-*ConnectError.csv* is a csv file responsible to store the error when a selenium connection go wrong.
+*ConnectError.csv* is a csv file responsible to store the error when a connection go wrong.
 
 *autoWords.py* will make a connection to a wiki page (the link can be passed or use a default one), get the html and than extract a bunch of words and its suffix links, return them.
 
 *common.py* common functions and constants used during the code.
 
-*connection.py* functions responsible to make the selenium connection - save when a connection error happen.
+*connection.py* functions responsible to make the HTTP connection with Wikipedia (using **requests**) - save when a connection error happen.
 
 *extractWords.py* will make a connection to a wiki page from a given word, extract the next posible word/node (function `get_word()`), valid it (if not valid, look for another) - continue this flow until a Stop Conditions happen (is a loop or hit Philosophy).
 
