@@ -1,3 +1,4 @@
+import re
 from urllib.parse import unquote
 from ETL import neo4jFunc, connection, common
 from bs4 import BeautifulSoup, NavigableString
@@ -38,12 +39,22 @@ def get_page_title(soup):
     return ''
 
 
+def link_suffix(href):
+    '''return the wiki link suffix of a href - relative ("/wiki/X", "./X")
+        or absolute ("https://pt.wikipedia.org/wiki/X"); '' if it isn't a wiki link'''
+    match = re.match(r'^(?:(?:https?:)?//[a-z-]+\.(?:m\.)?wikipedia\.org)?/wiki/(.+)', href) \
+            or re.match(r'^\./([^/?].*)', href)
+    if match is None:
+        return ''
+    return match.group(1).split('#')[0]
+
+
 def is_article_link(tag):
     '''check if a <a> tag links to another wikipedia article'''
-    href = tag.get('href', '')
-    if not href.startswith('/wiki/') or 'new' in tag.get('class', []): #external or red link
+    suffix = link_suffix(tag.get('href', ''))
+    if suffix == '' or 'new' in tag.get('class', []): #external or red link
         return False
-    title = title_from_suffix(href[len('/wiki/'):])
+    title = title_from_suffix(suffix)
     if title == '':
         return False
     if ':' in title and title.split(':')[0].strip().lower() in NAMESPACES:
@@ -85,7 +96,7 @@ def get_word(html):
             continue
         tag = first_valid_link(paragraph)
         if tag is not None:
-            suffix = tag['href'][len('/wiki/'):].split('#')[0]
+            suffix = link_suffix(tag['href'])
             return title_from_suffix(suffix), suffix, True
 
     return '', '', False

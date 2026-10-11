@@ -1,6 +1,6 @@
 import re
 from ETL import connection, common
-from ETL.extractWords import get_content, is_article_link, title_from_suffix
+from ETL.extractWords import get_content, is_article_link, link_suffix, title_from_suffix
 from bs4 import BeautifulSoup
 
 
@@ -52,7 +52,7 @@ def extract_new_words(html):
     # Extract words and suffixes (end of a wiki link) - without duplicates
     words, suffixes = [], []
     for a in tags_a:
-        suffix = a['href'].split('/wiki/')[-1].split('#')[0]
+        suffix = link_suffix(a['href'])
         word = title_from_suffix(suffix)
         if word not in words:
             words.append(word)
