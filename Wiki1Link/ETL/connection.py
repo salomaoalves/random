@@ -84,6 +84,7 @@ def get_suffix(lang, word):
     if resp is None or '/wiki/' not in resp.url:
         return ''
     suffix = resp.url.split('/wiki/')[-1].split('#')[0]
-    if unquote(suffix).startswith('Special:'): #search result page - no article found
+    namespace = unquote(suffix).split(':')[0].lower() if ':' in suffix else ''
+    if namespace in ['special', 'especial']: #search result page - no article found
         return ''
     return suffix

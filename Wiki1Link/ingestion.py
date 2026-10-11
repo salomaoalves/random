@@ -56,13 +56,13 @@ def costum_ingestion():
 
 def auto_ingestion():
     # Get requires inputs
+    lang, _, link = getAttrIng('auto')
     while True:
-        lang, _, link = getAttrIng('auto')
         words, suffixes = autoWords.main(lang, link)
         if words!=-1: #check for link error
             break
-        else:
-            print('!!!!!! WRONG LINK - need to be a wikipedia link!!!')
+        print('!!!!!! WRONG LINK - need to be a wikipedia link!!!')
+        link = input('Wikipedia URL (PRESS Enter to None): ').strip()
 
     # For each 'blue' word finded, call the extract process
     print('\n\nStarting Auto Ingestion process...')
