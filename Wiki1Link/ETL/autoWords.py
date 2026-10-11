@@ -1,15 +1,13 @@
 import re
-from Wiki1Link.ETL import connection
+from ETL import connection, common
+from ETL.extractWords import get_content, is_article_link, link_suffix, title_from_suffix
 from bs4 import BeautifulSoup
-
-DATA_ATUAL = connection.DATA_ATUAL
 
 
 def get_links(lang):
     '''return "Philosophy" wikipedia link for a database type / wiki language
         @lang: database type / wiki language'''
-    if lang not in ['en','pt','es']:
-        lang = 'en'
+    lang = common.get_wiki_lang(lang)
     if lang == 'en':
         return 'https://en.wikipedia.org/wiki/Philosophy'
     elif lang == 'pt':
@@ -25,17 +23,16 @@ def check_link(lang, link):
         @link: the link'''
 
     # Empty link
+    link = link.strip()
     if link=='':
-        link = get_links(lang)
+        return get_links(lang)
 
     # Verify link
-    else:
-        if not re.search('^https://'+lang+'.wikipedia.org/wiki|^http://'+lang +'.wikipedia.org/wiki|^'+lang+'.wikipedia.org/wiki|^'+lang+'.wikipedia.org', link):
-            return -1
-        if re.search('^'+lang+'.wikipedia.org', link):
-            link = 'https://' + link
-        if re.search('^'+lang+'.wikipedia.org', link):
-            link = 'https://www.' + link
+    lang = common.get_wiki_lang(lang)
+    if not re.search('^(https?://)?(www\\.)?'+lang+'\\.(m\\.)?wikipedia\\.org/wiki/.+', link):
+        return -1
+    if not re.search('^https?://', link):
+        link = 'https://' + link
 
     return link
 
@@ -46,15 +43,22 @@ def extract_new_words(html):
 
     # Get all possible word
     soup = BeautifulSoup(html, "html.parser")
-    paragraphs = soup.find("div", {'class': 'mw-parser-output'}).find_all("p")
-    tags_a = paragraphs.find_all('a')
+    content = get_content(soup)
+    if content is None:
+        return [], []
+    tags_a = [a for p in content.find_all("p") if p.find_parent('table') is None #skip infobox/tables
+              for a in p.find_all('a') if is_article_link(a)]
 
-    # Extract words and suffixes (end of a wiki link)
-    words = [a.text for a in tags_a if 'citi_note' not in a['href']]
-    suffixes = [a['href'].split('/')[-1] for a in tags_a if 'citi_note' not in a['href']]
-    
+    # Extract words and suffixes (end of a wiki link) - without duplicates
+    words, suffixes = [], []
+    for a in tags_a:
+        suffix = link_suffix(a['href'])
+        word = title_from_suffix(suffix)
+        if word not in words:
+            words.append(word)
+            suffixes.append(suffix)
+
     return words, suffixes
-
 
 
 def main(lang, link):
@@ -69,5 +73,7 @@ def main(lang, link):
 
     # Get html
     html = connection.connect(lang, 'AutoIngest', '', link)
+    if html=='':
+        return [], []
 
     return extract_new_words(html)

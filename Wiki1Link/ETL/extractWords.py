@@ -1,139 +1,105 @@
 import re
+from urllib.parse import unquote
 from ETL import neo4jFunc, connection, common
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, NavigableString
+
+# Wikipedia namespaces (en, pt, es) - links to them aren't articles
+NAMESPACES = {
+    'file', 'image', 'ficheiro', 'arquivo', 'imagem', 'archivo', 'imagen',
+    'help', 'ajuda', 'ayuda', 'wikipedia', 'wikipédia', 'wp',
+    'category', 'categoria', 'categoría', 'template', 'predefinição', 'plantilla',
+    'portal', 'special', 'especial', 'talk', 'discussão', 'discusión',
+    'user', 'usuário', 'usuario', 'utilizador', 'module', 'módulo',
+    'mediawiki', 'anexo', 'wiktionary', 'wikcionário', 'wikcionario', 'draft',
+}
 
 
-def from_str_to_list(string):
-    '''each caracther is a element'''
-    l_parag = []
-    l_parag[:0] = string
-    return l_parag
-
-def from_list_to_str(l_parag):
-    '''inverse of the above'''
-    return ''.join(l_parag)
+def title_from_suffix(suffix):
+    '''transform a wiki link suffix in the page title
+        e.g. "Oi_(empresa)" -> "Oi (empresa)"'''
+    return unquote(suffix.split('#')[0]).replace('_', ' ')
 
 
-
-def delete_paren_text(l_parag, open_paren, close_paren):
-    '''return the paragh without a certain parenthesis and that same parenthesis'''
-
-    # Get parenthesis text
-    paren_parag = l_parag[open_paren:close_paren+1]
-    
-    # Delete the parenthesis text from the paragraph
-    del(l_parag[open_paren:close_paren+1])
-
-    return l_parag, paren_parag
+def get_content(soup):
+    '''return the article body of a wiki page'''
+    content = soup.select_one('#mw-content-text .mw-parser-output')
+    if content is None:
+        content = soup.find("div", {'class': 'mw-parser-output'})
+    return content
 
 
-def get_all_text_paren(l_parag):
-    '''return all string between any parenthesis in a paragraph
-        @l_parag: the paragraph in list format'''
+def get_page_title(soup):
+    '''return the title of a wiki page - after any redirect'''
+    canonical = soup.find('link', {'rel': 'canonical'})
+    if canonical is not None and '/wiki/' in canonical.get('href', ''):
+        return title_from_suffix(canonical['href'].split('/wiki/')[-1])
+    heading = soup.find(id='firstHeading')
+    if heading is not None:
+        return heading.get_text().strip()
+    return ''
 
-    parag_with_paren, is_done = [], False
 
-    while True:
-        # Get parenthesis coordenation
-        try:
-            open_paren = l_parag.index('(')
-        except ValueError:
-            is_done = True
-        try:
-            close_paren = l_parag.index(')')
-        except ValueError:
-            is_done = True
+def link_suffix(href):
+    '''return the wiki link suffix of a href - relative ("/wiki/X", "./X")
+        or absolute ("https://pt.wikipedia.org/wiki/X"); '' if it isn't a wiki link'''
+    match = re.match(r'^(?:(?:https?:)?//[a-z-]+\.(?:m\.)?wikipedia\.org)?/wiki/(.+)', href) \
+            or re.match(r'^\./([^/?].*)', href)
+    if match is None:
+        return ''
+    return match.group(1).split('#')[0]
 
-        # While exist, extract text between parenthesis
-        if not is_done:
-            current_parenthesis = l_parag[open_paren+1:close_paren+1]
-            while re.search("\(", ' '.join(current_parenthesis)):
-                l_parag[current_parenthesis.index('(')] = '.'
-                close_paren = l_parag[close_paren+1:].index(')')
-            l_parag, parag_with_paren_temp = delete_paren_text(l_parag, open_paren, close_paren)
-            parag_with_paren.append(parag_with_paren_temp)
-        else:
-            return parag_with_paren
 
-def check_match(possible_word, l_parag_with_paren):
-    '''Verify if a possible blue word belongs to a text between some parenthesis
-        @possible_word: possible blue words - str format
-        @l_parag_with_paren: list of the text in a paragraph'''
-
-    l_parag = re.sub("[;:.,><\[\]{}/][ \xa0]", " ", from_list_to_str(l_parag_with_paren[1:-1])).split(' ')
-    l_possible_word = re.sub("[;:.,><\[\]{}/] ", " ", possible_word).split(' ')
-    qty_word, match_sum = len(l_possible_word), 0
-    for i in range(qty_word):
-        if l_possible_word[i] in l_parag:
-            match_sum += 1
-        elif l_possible_word[i][-1] in ['v']:
-            if l_possible_word[i][:-1] in l_parag:
-                match_sum += 1
-    if match_sum == qty_word:
-        return True
-    else:
+def is_article_link(tag):
+    '''check if a <a> tag links to another wikipedia article'''
+    suffix = link_suffix(tag.get('href', ''))
+    if suffix == '' or 'new' in tag.get('class', []): #external or red link
         return False
-
-def verify_word(ll_parag_with_paren, l_possible_word, l_possible_suffix):
-    '''Try to find the node word - blue words inside of any parenthesis are invalid
-        @ll_parag_with_paren: list of list with the text in the parenteshis
-        @l_possible_word: list of blue words
-        @l_possible_suffix: list of the blue words suffix'''
-
-    # Check if the possibles words are valid. Start from the first blue word finded,
-    #   it'll test if it's belongs to any parenthesis text; if it's True, delete the current one
-    #   and try the next possible blue word, if Not, verify in the next parenthesis
-    word_index, parag_index = 0, 0
-    while True:
-        next_paren = True
-        if parag_index == len(ll_parag_with_paren): #no more paragraph to verify - exit
-            break
-        if check_match(l_possible_word[word_index], ll_parag_with_paren[parag_index]): #if belongs to the parenthesis text
-            del(l_possible_word[word_index])
-            del(l_possible_suffix[word_index])
-            next_paren = False
-        if next_paren: #if go to next parenthesis
-            parag_index += 1
-
-    # Return the fisrt possible blue word - if any is left
-    if len(l_possible_word) == 0:
-        return '', '', False
-    else:
-        return l_possible_word[0], l_possible_suffix[0], True
+    title = title_from_suffix(suffix)
+    if title == '':
+        return False
+    if ':' in title and title.split(':')[0].strip().lower() in NAMESPACES:
+        return False
+    return True
 
 
-def get_word(html, parag_numb=0):
-    '''try to find some valid blue word / node - it'll try per paragrah in the page
-        @html: the page
-        @parag_numb: paragraph to try'''
+def first_valid_link(paragraph):
+    '''return the first article link of a paragraph that isn't inside a parenthesis
+        @paragraph: the <p> tag'''
+    depth = 0
+    for el in paragraph.descendants:
+        if isinstance(el, NavigableString):
+            # Text inside links (e.g. "Oi (empresa)") and styles doesn't open/close parenthesis
+            if el.parent.name in ['style', 'script'] or el.find_parent('a') is not None:
+                continue
+            for c in el:
+                if c == '(':
+                    depth += 1
+                elif c == ')' and depth > 0:
+                    depth -= 1
+        elif el.name == 'a' and depth == 0 and is_article_link(el) \
+                and el.find_parent(['sup', 'small']) is None:
+            return el
+    return None
 
-    possible_word, possible_suffix, parag_with_paren = [], [], []
 
-    # Get the paragraph and transform in list format
+def get_word(html):
+    '''try to find the first valid blue word / node - it'll try per paragrah in the page
+        @html: the page'''
+
     soup = BeautifulSoup(html, "html.parser")
-    paragraph = soup.find("div", {'class': 'mw-parser-output'}).find_all("p")[parag_numb]
-    tags_a = paragraph.find_all('a')
-    convert_parag = from_str_to_list(paragraph.text)
+    content = get_content(soup)
+    if content is None:
+        return '', '', False
 
-    # Get all blue words in the parag
-    for tag in tags_a:
-        if '[' not in tag.text:
-            possible_word.append(tag.text)
-            possible_suffix.append(tag['href'].split('/')[-1])
-    
-    # Exit if find nothing
-    if len(possible_word) == 0:
-        return '', '', False, parag_numb+1
-    
-    # Check if any blue word is valid
-    parag_with_paren = get_all_text_paren(convert_parag)
-    word, suffix, found = verify_word(parag_with_paren, possible_word, possible_suffix)
-    
-    if found: #valid
-        return word, suffix, True, -1
-    else:     #invalid
-        return '', '', False, parag_numb+1
+    for paragraph in content.find_all("p"):
+        if paragraph.find_parent('table') is not None: #skip infobox/tables
+            continue
+        tag = first_valid_link(paragraph)
+        if tag is not None:
+            suffix = link_suffix(tag['href'])
+            return title_from_suffix(suffix), suffix, True
 
+    return '', '', False
 
 
 def main(lang, word, suffix):
@@ -143,17 +109,14 @@ def main(lang, word, suffix):
         @suffix: wiki link suffix of the word'''
 
     # Get attributes
-    new_vert, stop_word = [word], common.get_stop_word(lang)
-    cond_word, cond_loop = False, False
+    new_vert, stop_word = [], common.get_stop_word(lang)
     ingested_word = neo4jFunc.get_all_nodes(lang)
 
     # If empty, find a possible suffix
     if suffix=='':
         suffix = connection.get_suffix(lang, word)
-
-    # Check if word is already ingested
-    if word in ingested_word:
-        return -1, word
+        if suffix=='':
+            return -2, word
 
     # Get all words/vertices
     while True:
@@ -161,28 +124,35 @@ def main(lang, word, suffix):
         # Make connection and treat any error
         html = connection.connect(lang, word, suffix)
         if html=='':
-            return -2, word
-        
-        # Find the next node (blue word) - try until find
-        new_word, suffix, found, parag_numb = get_word(html)
-        while not found:
-            new_word, suffix, found, parag_numb = get_word(html, parag_numb)
-        
+            if len(new_vert)==0:
+                return -2, word
+            break
+
+        # The node name is the page title - so redirects/different texts are the same node
+        title = get_page_title(BeautifulSoup(html, "html.parser")) or word
+
+        # Check if the start word is already ingested
+        if len(new_vert)==0 and title in ingested_word:
+            return -1, title
+
         # Find Philosophy word - Stop Cond 1
-        if suffix == stop_word:
-            cond_word = True
+        cond_word = title == stop_word
 
         # Word already ingested or to be ingested - Stop Cond 2
-        if new_word in new_vert + ingested_word:
-            cond_loop = True
-        
+        cond_loop = title in new_vert or title in ingested_word
+
         # Add new vert in the list of vert
-        new_vert.append(new_word)
+        new_vert.append(title)
 
         # Verify 'Stop Conditions'
         if cond_word or cond_loop:
             break
-        else:
-            word = new_word
-    
+
+        # Find the next node (blue word)
+        word, suffix, found = get_word(html)
+        if not found: #page without any valid link - end of the path
+            break
+
+    if len(new_vert) < 2:
+        return '', new_vert[0] if new_vert else word
     return new_vert, ''

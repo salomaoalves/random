@@ -10,57 +10,48 @@ def getAttrSummary():
     lang = common.get_lang()
     
     # Inputs words
-    n_word, words = int(input('How many words:')), []
+    n_word = input('How many words:').strip()
+    while not n_word.isdigit():
+        n_word = input('Need to be a number - How many words:').strip()
+    n_word, words = int(n_word), []
     for i in range(n_word):
-        words.append(input(f'\tWord{i+1}: '))
+        words.append(input(f'\tWord{i+1}: ').strip())
 
     return lang, words, n_word
 
-def get_philo(node):
-    '''auxiliar function used to select the Philosophy Graph.
-        Will verify if the node belong to the philo graph
-        for that, try to find a path between the @node and "Philosophy"
-        If node=Philosophy, return True'''
-    philo_word = commonETL.get_stop_word(lang)
-    node_dict = neo4jFunc.get_all_id_nodes(lang)
-    pathToPhilo = neo4jFunc.get_path_between(node, philo_word, node_dict, lang)
-    if node==philo_word:
-        in_philo = True
-    else:
-        in_philo = pathToPhilo!='not_found'
-    return in_philo
-
-
-def graph_info(word, philo_word, node_dict, lang):
+def graph_info(word, philo_word, lang):
     '''show graph info related to a certain node
         @word: reference node
         @philo_word: node "Philosophy"
-        @node_dict: a dict with node id and name
         @lang: database type'''
 
     # Search a path for the node inside the Philosophy graph
-    path_WordtoPhilo = neo4jFunc.get_path_between(word, philo_word, node_dict, lang)
+    path_WordtoPhilo = neo4jFunc.get_path_between(word, philo_word, lang)
     
     # Print graph info
     if path_WordtoPhilo=='not_found':
         if word==philo_word:
             print('\t\t\tThis is the "Philosophy" node.')
         else:
-            loop = neo4jFunc.get_path_between(word, word, node_dict, lang)
-            print('\t\t\tBelongs to a "Loop Graph"!!')
-            print(f'\t\t\tPath: ',end='')
-            common.display(loop[0])
-            print(f'\t\t\tSize of: {len(loop[0])-1}')
+            loop = neo4jFunc.get_path_between(word, word, lang)
+            if loop=='not_found':
+                print('\t\t\tDoesn\'t belong to the "Philosophy Graph" or to a "Loop Graph"!!')
+                print('\t\t\t\t-it leads to a loop or to a page without valid links.')
+            else:
+                print('\t\t\tBelongs to a "Loop Graph"!!')
+                print(f'\t\t\tPath: ',end='')
+                common.display(loop[0])
+                print(f'\t\t\tSize of: {loop[1]}')
     else:
         print('\t\t\tBelongs to the "Philosophy Graph"!!')
         print(f'\t\t\tPath: ',end='')
         common.display(path_WordtoPhilo[0])
-        print(f'\t\t\tSize of: {len(path_WordtoPhilo[0])-1}')
+        print(f'\t\t\tSize of: {path_WordtoPhilo[1]}')
 
 
 def succ_pred_nodes(graph, word):
     '''show successors and predecessors nodes
-        @graph: 
+        @graph: nx DiGraph
         @word: reference node'''
 
     # Get all pred and succ nodes
@@ -72,28 +63,25 @@ def succ_pred_nodes(graph, word):
         print(f'\t\t\t{name} words: | ',end='')
         if len(nodes)==0: print('No word |')
         else:
-            for n in nodes:
-                if n == nodes[-1]:
-                    print(f'{n} |')
-                else:
-                    print(f'{n} - ',end='')
+            print(' - '.join(nodes) + ' |')
 
 
 def summary_stats():
     # Get required inputs
-    global lang
     lang, words, n_word = getAttrSummary()
     philo_word = commonETL.get_stop_word(lang)
-    node_dict = neo4jFunc.get_all_id_nodes(lang)
     graph = common.get_graph(lang)
     print(f'\n\nStart Summary Statistics with Wikipidea in {lang}')
+    if graph.order()==0:
+        print(f'\tThere is no word ingested for {lang}!!!')
+        return
     
     
     print('\tGeneral Graph Info')
     
     # Number of nodes and edges for each graph
-    loop_graph = common.get_loops(lang, node_dict)
-    philo_graph = nx.subgraph_view(graph, filter_node=get_philo)
+    loop_graph = common.get_loops(lang)
+    philo_graph = common.get_philo_graph(graph, lang)
     print(f'\t\tNumber of nodes: {graph.order()}')
     print(f'\t\tNumber of edges: {graph.size()}')
     print(f'\t\tNumber of nodes (Philo): {philo_graph.order()}')
@@ -119,6 +107,9 @@ def summary_stats():
     print('\tSummary per word')
     for i in range(len(words)):
         print(f'\t\tWord: {words[i]}')
+        if words[i] not in graph:
+            print('\t\t\tWord not found in the graph!!')
+            continue
 
         # Get successor and predecessors words
         succ_pred_nodes(graph, words[i])
@@ -130,7 +121,7 @@ def summary_stats():
         print(f'\t\t\tNumber of edges pointing out of the word: {out_degree}')
 
         # Get graph info related to the word
-        graph_info(words[i], philo_word, node_dict, lang)
+        graph_info(words[i], philo_word, lang)
 
 
     print('\tPath between the words inputed')
@@ -138,9 +129,9 @@ def summary_stats():
     if n_word>1:
         for i in range(n_word):
             for j in range(i,n_word):
-                if words[i]!=words[j]:
+                if words[i]!=words[j] and words[i] in graph and words[j] in graph:
                     print(f'\t\tPath between nodes {words[i]} and {words[j]}')
-                    path_between = neo4jFunc.get_path_between(words[i], words[j], node_dict, lang)
+                    path_between = neo4jFunc.get_path_between(words[i], words[j], lang)
                     if path_between=='not_found':
                         print(f'\t\t\tThere is no directed path between nodes {words[i]} and {words[j]}!!')
                         print('\t\t\t\t-put this two nodes in the "View Path" feature to verify which graph they belongs.')
