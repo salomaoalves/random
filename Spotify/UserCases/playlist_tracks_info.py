@@ -17,7 +17,7 @@ def playlist_tracks_info(playlist_link, AMOUNT=10, gather_all_artist=False):
         results = sp.next(results)
         all_msc.extend(results['items'])
     
-    artist, all_artist = [], []
+    main_artist, all_artist = [], []
     for i, track in enumerate(all_msc):
         if gather_all_artist: #in a list and return it
             main_artist.append(track["track"]["artists"][0]["name"].strip())

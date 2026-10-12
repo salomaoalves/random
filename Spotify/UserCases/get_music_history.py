@@ -30,5 +30,5 @@ data = [
         for track in recent_tracks['items']
 ]
 df = pd.DataFrame(data, columns=["Música", "Artista", "Tocada em"])
-df.to_csv("music_historiy.csv", index=False)
-print("Histórico salvo como 'music_historiy.csv' 🎵✅")
+df.to_csv("music_history.csv", index=False)
+print("Histórico salvo como 'music_history.csv' 🎵✅")
