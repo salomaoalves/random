@@ -15,6 +15,3 @@ Export every track of a playlist to `musicas.txt` (sorted by artist). The remova
 
 ## test.py
 Search a list of artists, get their top tracks and add them to an existing playlist (optionally clearing it first).
-
-## constants.py
-Lists of "This Is" artists by type: `ISTHIS_ARTIST_BR` (br), `ISTHIS_ARTIST_LATINA` (latina) and `ISTHIS_ARTIST` (general).

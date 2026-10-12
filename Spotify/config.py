@@ -27,3 +27,48 @@ def connect(scope=''):
     except Exception as e:
         raise RuntimeError('Unable to connect with Spotify') from e
     return sp
+
+
+def get_isthis_artist_br():
+    return ['Adoniran Barbosa'
+        , 'Arthur Verocai'
+        , 'Karen Dió'
+        , 'Mari Froes' 
+        , 'Terra Celta'
+        , 'Urias'
+        , 'Ventania' ]
+
+def get_isthis_artist_latina():
+    return ['31 Minutos'
+        , 'Balla Et Ses Balladins'
+        , 'Las Pastillas'
+        , 'Milo j'
+        , 'Nicki Nicole' 
+        , 'ROSALÍA' ]
+
+def get_isthis_artist():
+    return ['Aurora' 
+        , 'BABYMETAL' 
+        , 'Brutalismus 3000' 
+        , 'Creedence Clearwater Revival' 
+        , 'Dom Dolla' 
+        , 'ghstpunk' 
+        , 'Gorillaz' 
+        , 'Guma' 
+        , 'Indila'
+        , 'Jacob Colier'
+        , 'Jul' 
+        , 'Justin Bieber'
+        , 'Kavinsky' 
+        , 'Lee Young Ji' 
+        , 'Michael Bublé' 
+        , 'Otyken' 
+        , 'Rondò Veneziano' 
+        , 'Saint Levant' 
+        , 'Sara Landry' 
+        , 'Stromae' 
+        , 'The Snake Charmer' 
+        , 'The Velvet Sundown' 
+        , 'Tinarwen' 
+        , 'ZZ Top'
+    ]
