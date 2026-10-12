@@ -24,8 +24,8 @@ def connect(scope=''):
         else: # get user data
             sp = spotipy.Spotify(
                 auth_manager=SpotifyOAuth(scope=scope))
-    except:
-        print('Unable to connect with Spotify')
+    except Exception as e:
+        raise RuntimeError('Unable to connect with Spotify') from e
     return sp
 
 

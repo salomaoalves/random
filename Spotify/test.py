@@ -24,6 +24,8 @@ def update_playlist_with_artists(playlist_id, artist_list, tracks_per_artist=4, 
                 
             # extract uri and remove them in batches of 100
             track_uris = [item["track"]["uri"] for item in items if item["track"]]
+            if not track_uris:
+                break # only items without track (e.g. unavailable) left
             sp.playlist_remove_all_occurrences_of_items(playlist_id=playlist_id, items=track_uris)
 
     # get current tracks to prevent duplicates
@@ -98,5 +100,5 @@ update_playlist_with_artists(
     playlist_id=EXISTING_PLAYLIST_ID,
     artist_list=my_artists,
     tracks_per_artist=3,
-    clear_playlist=True
+    clear=True
 )

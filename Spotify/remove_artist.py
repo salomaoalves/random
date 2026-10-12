@@ -16,7 +16,7 @@ while results['next']:
     results = sp.next(results)
     all_msc.extend(results['items'])
 
-msc_to_remove, all_msc_artist = [], {}
+msc_to_remove, all_msc_artist = [], []
 
 # verify each msc
 for item in all_msc:
@@ -26,7 +26,7 @@ for item in all_msc:
     track_id, track_name = track['id'], track['name']
 
     # get dict w all msc/artist
-    all_msc_artist[track_name] = track['artists'][0]['name'].lower()
+    all_msc_artist.append((track_name, track['artists'][0]['name'].lower()))
     
     # get the artists
     artists_from_msc = [artist['name'].lower() for artist in track['artists']]
@@ -38,13 +38,10 @@ for item in all_msc:
     #     if proceed.lower() == 'y': msc_to_remove.append(track_id)
 
 # sort (by artirs) n write all msc/artist
-all_msc_artist_sort = dict(sorted(all_msc_artist.items(), key=lambda item: item[1]))
+all_msc_artist_sort = sorted(all_msc_artist, key=lambda item: item[1])
 with open('./musicas.txt', 'w', encoding='utf-8') as f:
-    for key, value in all_msc_artist_sort.items():
+    for key, value in all_msc_artist_sort:
         f.write(f"{key} -> {value}\n")
-
-print('------------------------------------------------------------------')
-print(artists_from_msc)
 
 # Remove the selected msc
 if msc_to_remove:
