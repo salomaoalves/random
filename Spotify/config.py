@@ -3,10 +3,12 @@ import spotipy
 import spotipy.util as util
 from spotipy.oauth2 import SpotifyClientCredentials, SpotifyOAuth
 
-def get_uri(spotify_url):
-    '''Get the last set of char of a open.spotify url'''
-    return spotify_url.split("/")[-1].split("?")[0]
- 
+
+def get_uri(spotify_uri):
+    '''Get the last set of char of a open.spotify uri'''
+    return spotify_uri.split("/")[-1].split("?")[0]
+
+
 def connect(scope=''):
     '''Connect with Spotify API - to get its dats
         get the dev credentials (ClientId, ClientSecret, RedirectUrl) in https://developer.spotify.com/
@@ -25,3 +27,48 @@ def connect(scope=''):
     except:
         print('Unable to connect with Spotify')
     return sp
+
+
+def get_isthis_artist_br():
+    return ['Adoniran Barbosa'
+        , 'Arthur Verocai'
+        , 'Karen Dió'
+        , 'Mari Froes' 
+        , 'Terra Celta'
+        , 'Urias'
+        , 'Ventania' ]
+
+def get_isthis_artist_latina():
+    return ['31 Minutos'
+        , 'Balla Et Ses Balladins'
+        , 'Las Pastillas'
+        , 'Milo j'
+        , 'Nicki Nicole' 
+        , 'ROSALÍA' ]
+
+def get_isthis_artist():
+    return ['Aurora' 
+        , 'BABYMETAL' 
+        , 'Brutalismus 3000' 
+        , 'Creedence Clearwater Revival' 
+        , 'Dom Dolla' 
+        , 'ghstpunk' 
+        , 'Gorillaz' 
+        , 'Guma' 
+        , 'Indila'
+        , 'Jacob Colier'
+        , 'Jul' 
+        , 'Justin Bieber'
+        , 'Kavinsky' 
+        , 'Lee Young Ji' 
+        , 'Michael Bublé' 
+        , 'Otyken' 
+        , 'Rondò Veneziano' 
+        , 'Saint Levant' 
+        , 'Sara Landry' 
+        , 'Stromae' 
+        , 'The Snake Charmer' 
+        , 'The Velvet Sundown' 
+        , 'Tinarwen' 
+        , 'ZZ Top'
+    ]
