@@ -15,3 +15,10 @@ Export every track of a playlist to `musicas.txt` (sorted by artist). The remova
 
 ## test.py
 Search a list of artists, get their top tracks and add them to an existing playlist (optionally clearing it first).
+
+## random_artist_playlist.py
+Take one of the artist lists of `config.py` (`br`, `latina` or `geral`), get 5 random songs from each artist (from its albums and singles) and put them all in a new playlist.
+```
+python random_artist_playlist.py "Playlist name" br            # 5 songs per artist, private playlist
+python random_artist_playlist.py "Playlist name" geral -n 3 --public
+```
