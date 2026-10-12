@@ -3,10 +3,12 @@ import spotipy
 import spotipy.util as util
 from spotipy.oauth2 import SpotifyClientCredentials, SpotifyOAuth
 
-def get_uri(spotify_url):
-    '''Get the last set of char of a open.spotify url'''
-    return spotify_url.split("/")[-1].split("?")[0]
- 
+
+def get_uri(spotify_uri):
+    '''Get the last set of char of a open.spotify uri'''
+    return spotify_uri.split("/")[-1].split("?")[0]
+
+
 def connect(scope=''):
     '''Connect with Spotify API - to get its dats
         get the dev credentials (ClientId, ClientSecret, RedirectUrl) in https://developer.spotify.com/
