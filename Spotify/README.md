@@ -22,3 +22,11 @@ Take one of the artist lists of `config.py` (`br`, `latina` or `geral`), get 5 r
 python random_artist_playlist.py "Playlist name" br            # 5 songs per artist, private playlist
 python random_artist_playlist.py "Playlist name" geral -n 3 --public
 ```
+
+## playlist_genres.py
+Given the name (or link) of a public playlist, show which music genres are in it: for each genre, in how many songs it appears (a song has the genres of its artists). Artists without genre on Spotify are listed at the end.
+```
+python playlist_genres.py "Rock Brasil"                    # all genres
+python playlist_genres.py "Rock Brasil" --top 10           # only the 10 most common
+python playlist_genres.py "https://open.spotify.com/playlist/..." --main-artist   # only the main artist of each song
+```
