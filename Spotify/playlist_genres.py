@@ -24,7 +24,7 @@ def find_playlist(sp, playlist):
 
 
 def get_playlist_artists(sp, playlist_id):
-    '''Return, for each track of the playlist, the list of its artists ids (and a id -> name dict)'''
+    '''Return, for each track of the playlist, its name and the list of its artists ids (and a id -> name dict)'''
 
     # GET /playlists/{id}/items: endpoint of the Feb/2026 Spotify API ('track' was renamed to 'item')
     page = sp._get(f"playlists/{playlist_id}/items", limit=100)
@@ -43,7 +43,7 @@ def get_playlist_artists(sp, playlist_id):
             if artist.get("id"): # local files have artists without id
                 ids.append(artist["id"])
                 artist_names[artist["id"]] = artist["name"]
-        tracks_artists.append(ids)
+        tracks_artists.append((f"{track['name']} - {track['artists'][0]['name']}", ids))
     return tracks_artists, artist_names
 
 
@@ -57,9 +57,10 @@ def get_artists_genres(sp, artist_ids):
     return genres
 
 
-def playlist_genres(playlist, top=None, main_artist_only=False):
+def playlist_genres(playlist, top=None, main_artist_only=False, songs_per_genre=3):
     '''From the name (or link) of a public playlist, show which music genres are in it,
-        counting in how many songs each genre appears (a song has the genres of its artists)'''
+        counting in how many songs each genre appears (a song has the genres of its artists)
+        and showing the first SONGS_PER_GENRE songs of each genre'''
 
     sp = config.connect()
     found = find_playlist(sp, playlist)
@@ -70,23 +71,29 @@ def playlist_genres(playlist, top=None, main_artist_only=False):
 
     tracks_artists, artist_names = get_playlist_artists(sp, found["id"])
     if main_artist_only:
-        tracks_artists = [ids[:1] for ids in tracks_artists]
+        tracks_artists = [(name, ids[:1]) for name, ids in tracks_artists]
     if not tracks_artists:
         print("The playlist has no songs.")
         return None
 
-    artists_genres = get_artists_genres(sp, sorted({a for ids in tracks_artists for a in ids}))
+    artists_genres = get_artists_genres(sp, sorted({a for _, ids in tracks_artists for a in ids}))
 
-    genre_count, no_genre = Counter(), 0
-    for ids in tracks_artists:
+    genre_count, genre_songs, no_genre = Counter(), {}, 0
+    for name, ids in tracks_artists:
         track_genres = {genre for artist_id in ids for genre in artists_genres[artist_id]}
         genre_count.update(track_genres)
+        for genre in track_genres:
+            songs = genre_songs.setdefault(genre, [])
+            if len(songs) < songs_per_genre:
+                songs.append(name)
         no_genre += not track_genres
 
     total = len(tracks_artists)
     print(f"\n{len(genre_count)} genres found in {total} songs ({len(artists_genres)} artists):")
     for genre, count in genre_count.most_common(top):
         print(f"   {genre:<35} {count:>4} songs  ({count/total:.0%})")
+        for song in genre_songs[genre]:
+            print(f"      - {song}")
     if no_genre:
         print(f"\n{no_genre} songs have artists without genre on Spotify:")
         print("   " + ", ".join(sorted({artist_names[a] for a, g in artists_genres.items() if not g})))
@@ -97,7 +104,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Show the music genres present in a public playlist")
     parser.add_argument("playlist", help="name of the public playlist (or its link)")
     parser.add_argument("-t", "--top", type=int, default=None, help="show only the TOP most common genres (default: all)")
+    parser.add_argument("-s", "--songs", type=int, default=3, help="songs shown for each genre (default: 3)")
     parser.add_argument("--main-artist", action="store_true", help="use only the main artist of each song (default: all artists)")
     args = parser.parse_args()
 
-    playlist_genres(args.playlist, args.top, args.main_artist)
+    playlist_genres(args.playlist, args.top, args.main_artist, args.songs)
