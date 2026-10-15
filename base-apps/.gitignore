@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+.venv/
+build/
+# cópia gerada pelo scripts/preparar_build.py
+apps/*/src/nucleo/
