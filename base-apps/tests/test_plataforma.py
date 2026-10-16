@@ -15,6 +15,7 @@ sys.path.insert(0, str(RAIZ / "nucleo" / "src"))
 from nucleo import ErroAuth, criar_main  # noqa: E402
 from nucleo.auth import AuthMemoria  # noqa: E402
 from nucleo.dados import RepositorioMemoria  # noqa: E402
+from nucleo.ui.login import AVISO_REDEFINICAO  # noqa: E402
 
 
 class PaginaFalsa(SimpleNamespace):
@@ -64,6 +65,17 @@ class TestAuth(unittest.TestCase):
         self.assertEqual([e.email if e else None for e in eventos],
                          ["ana@exemplo.com", None, "ana@exemplo.com"])
 
+    def test_redefinicao_senha(self):
+        auth = AuthMemoria()
+        auth.cadastrar_email("ana@exemplo.com", "123456")
+        auth.sair()
+        auth.enviar_redefinicao_senha(" Ana@Exemplo.com ")
+        auth.enviar_redefinicao_senha("ninguem@exemplo.com")   # sem conta: não falha nem envia
+        self.assertEqual(auth.redefinicoes_enviadas, ["ana@exemplo.com"])
+        self.assertIsNone(auth.usuario_atual)                  # pedir redefinição não autentica
+        with self.assertRaises(ErroAuth):
+            auth.enviar_redefinicao_senha("invalido")
+
     def test_validacao(self):
         with self.assertRaises(ErroAuth):
             AuthMemoria().cadastrar_email("invalido", "123456")
@@ -79,6 +91,8 @@ class TestApps(unittest.TestCase):
         main(page)
         self.assertEqual(len(page.controls), 1)          # tela de login
         self.assertIsNone(page.navigation_bar)
+        self._esqueci_senha(page)
+        self.assertIsNone(page.navigation_bar)           # continua no login
         self._entrar_google(page)
         self.assertIsNotNone(page.navigation_bar)        # layout de abas
 
@@ -87,28 +101,41 @@ class TestApps(unittest.TestCase):
         page = PaginaFalsa()
         criar_main(config, telas.montar_app, montar_login=telas.tela_login)(page)
         self.assertIsNone(page.drawer)
+        self._esqueci_senha(page)
         self._entrar_google(page)
         self.assertIsNotNone(page.drawer)                # layout com menu lateral
         page.floating_action_button.on_click(None)       # cria registro
         self.assertEqual(len(page.controls), 1)
 
-    @staticmethod
-    def _entrar_google(page):
-        def achar(ctrl):
-            if getattr(ctrl, "content", None) == "Continuar com Google":
-                return ctrl
-            filhos = list(getattr(ctrl, "controls", None) or [])
-            if getattr(ctrl, "content", None) is not None and not isinstance(ctrl.content, str):
-                filhos.append(ctrl.content)
-            for f in filhos:
-                achado = achar(f)
-                if achado:
-                    return achado
-            return None
+    @classmethod
+    def _entrar_google(cls, page):
+        cls._clicar(page, "Continuar com Google")
 
-        botao = achar(page.controls[0])
-        assert botao is not None, "botão Google não encontrado"
+    @classmethod
+    def _esqueci_senha(cls, page):
+        cls._achar(page.controls[0], lambda c: getattr(c, "label", None) == "Email").value = "ana@exemplo.com"
+        cls._clicar(page, "Esqueci a senha")
+        aviso = cls._achar(page.controls[0], lambda c: getattr(c, "value", None) == AVISO_REDEFINICAO)
+        assert aviso is not None and aviso.visible, "aviso de redefinição não apareceu"
+
+    @classmethod
+    def _clicar(cls, page, rotulo):
+        botao = cls._achar(page.controls[0], lambda c: getattr(c, "content", None) == rotulo)
+        assert botao is not None, f"botão {rotulo!r} não encontrado"
         botao.on_click(None)
+
+    @classmethod
+    def _achar(cls, ctrl, criterio):
+        if criterio(ctrl):
+            return ctrl
+        filhos = list(getattr(ctrl, "controls", None) or [])
+        if getattr(ctrl, "content", None) is not None and not isinstance(ctrl.content, str):
+            filhos.append(ctrl.content)
+        for f in filhos:
+            achado = cls._achar(f, criterio)
+            if achado:
+                return achado
+        return None
 
 
 if __name__ == "__main__":

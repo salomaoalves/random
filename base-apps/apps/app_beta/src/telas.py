@@ -12,7 +12,9 @@ def tela_login(ctx: Contexto) -> ft.Control:
     cfg, tema = ctx.config, ctx.config.tema
     form = FormularioLogin(ctx)
     cartao_email = ft.Container(
-        content=ft.Column([form.email, form.senha, form.erro, form.botao_entrar, form.botao_cadastrar],
+        content=ft.Column([form.email, form.senha, form.erro, form.aviso, form.botao_entrar,
+                           ft.Row([form.botao_cadastrar, form.botao_esqueci],
+                                  alignment=ft.MainAxisAlignment.SPACE_BETWEEN)],
                           horizontal_alignment=ft.CrossAxisAlignment.STRETCH, spacing=12),
         padding=ft.Padding.all(20),
         bgcolor=tema.cor_superficie,

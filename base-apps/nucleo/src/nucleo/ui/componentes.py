@@ -66,6 +66,10 @@ def mensagem_erro() -> ft.Text:
     return ft.Text("", color="#EF4444", text_align=ft.TextAlign.CENTER, visible=False)
 
 
+def mensagem_aviso(tema: Tema) -> ft.Text:
+    return ft.Text("", color=tema.cor_primaria, text_align=ft.TextAlign.CENTER, visible=False)
+
+
 def rodape(cfg: Rodape, tema: Tema) -> ft.Column:
     links = [
         ft.Text(spans=[ft.TextSpan(link.rotulo, url=link.url, style=ft.TextStyle(decoration=ft.TextDecoration.UNDERLINE))],
