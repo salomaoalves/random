@@ -14,6 +14,7 @@ class AuthMemoria(ServicoAuth):
     def __init__(self) -> None:
         super().__init__()
         self._contas: dict[str, tuple[bytes, bytes, Usuario]] = {}
+        self.redefinicoes_enviadas: list[str] = []  # simula a caixa de saída de emails
 
     @staticmethod
     def _hash(senha: str, sal: bytes) -> bytes:
@@ -36,6 +37,11 @@ class AuthMemoria(ServicoAuth):
             raise ErroAuth("Email ou senha incorretos.")
         self._definir_usuario(conta[2])
         return conta[2]
+
+    def enviar_redefinicao_senha(self, email: str) -> None:
+        email = self.validar_email(email)
+        if email in self._contas:
+            self.redefinicoes_enviadas.append(email)
 
     def entrar_google(self, page: Any) -> Usuario | None:
         usuario = Usuario(id="google-dev", email="dev@gmail.com", nome="Usuário Google (dev)", provedor="google")

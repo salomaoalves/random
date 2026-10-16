@@ -44,10 +44,15 @@ class ServicoAuth(ABC):
             observador(usuario)
 
     @staticmethod
-    def validar(email: str, senha: str) -> tuple[str, str]:
+    def validar_email(email: str) -> str:
         email = (email or "").strip().lower()
         if not _EMAIL.match(email):
             raise ErroAuth("Email inválido.")
+        return email
+
+    @classmethod
+    def validar(cls, email: str, senha: str) -> tuple[str, str]:
+        email = cls.validar_email(email)
         if len(senha or "") < 6:
             raise ErroAuth("A senha precisa ter pelo menos 6 caracteres.")
         return email, senha
@@ -61,6 +66,10 @@ class ServicoAuth(ABC):
     @abstractmethod
     def entrar_google(self, page: Any) -> Usuario | None:
         """Retorna None se o usuário cancelar. `page` permite usar `page.login()` do Flet."""
+
+    @abstractmethod
+    def enviar_redefinicao_senha(self, email: str) -> None:
+        """Envia o link de redefinição. Não deve revelar se a conta existe."""
 
     def sair(self) -> None:
         self._definir_usuario(None)
