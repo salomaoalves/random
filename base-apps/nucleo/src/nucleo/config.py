@@ -12,6 +12,7 @@ class Tema:
     cor_texto: str = "#FFFFFF"
     cor_superficie: str = "#1E293B"
     escuro: bool = True
+    cor_sobre_primaria: str = "#FFFFFF"  # texto/ícone sobre a cor primária (ex.: preto sobre verde neon)
 
 
 @dataclass(frozen=True)

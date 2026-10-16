@@ -11,17 +11,25 @@ from ..config import Logo, Rodape, Tema
 Acao = Callable[[Any], Any]
 
 
+def icone(nome: str | ft.IconData) -> ft.IconData:
+    """Aceita o nome do ícone ("apps", "translate"); no Flet 1.0 o Icon só aceita `ft.Icons.*`."""
+    return getattr(ft.Icons, nome.upper()) if isinstance(nome, str) else nome
+
+
 def logo(cfg: Logo, tema: Tema) -> ft.Control:
     if cfg.src:
-        return ft.Image(src=cfg.src, width=cfg.largura, height=cfg.altura, fit=ft.BoxFit.CONTAIN)
-    return ft.Container(
-        content=ft.Icon(cfg.icone, size=cfg.largura * 0.5, color=tema.cor_texto),
-        width=cfg.largura,
-        height=cfg.altura,
-        bgcolor=tema.cor_primaria,
-        border_radius=ft.BorderRadius.all(cfg.largura / 2),
-        alignment=ft.Alignment.CENTER,
-    )
+        imagem = ft.Image(src=cfg.src, width=cfg.largura, height=cfg.altura, fit=ft.BoxFit.CONTAIN)
+    else:
+        imagem = ft.Container(
+            content=ft.Icon(icone(cfg.icone), size=cfg.largura * 0.5, color=tema.cor_sobre_primaria),
+            width=cfg.largura,
+            height=cfg.altura,
+            bgcolor=tema.cor_primaria,
+            border_radius=ft.BorderRadius.all(cfg.largura / 2),
+            alignment=ft.Alignment.CENTER,
+        )
+    # Centraliza sem esticar quando o pai usa CrossAxisAlignment.STRETCH (tela de login).
+    return ft.Container(content=imagem, alignment=ft.Alignment.CENTER)
 
 
 def titulo(texto: str, tema: Tema, tamanho: int = 22) -> ft.Text:
@@ -46,7 +54,7 @@ def botao_primario(rotulo: str, ao_clicar: Acao, tema: Tema) -> ft.Button:
         content=rotulo,
         on_click=ao_clicar,
         bgcolor=tema.cor_primaria,
-        color="#FFFFFF",
+        color=tema.cor_sobre_primaria,
         style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=10), padding=ft.Padding.symmetric(vertical=16)),
     )
 

@@ -13,7 +13,8 @@ plataforma-apps/
 │       └── app.py           iniciar_app: troca entre login e app pelo estado de auth
 ├── apps/
 │   ├── app_alfa/            abas inferiores + lista; usa o login padrão
-│   └── app_beta/            menu lateral + grade; login próprio
+│   ├── app_beta/            menu lateral + grade; login próprio
+│   └── app_idiomas/         app de idiomas: línguas, áreas, trilha de estações, sugestões
 ├── scripts/
 │   ├── novo_app.py          cria um filho novo a partir de outro
 │   └── preparar_build.py    copia o nucleo para o app antes do build
@@ -51,6 +52,17 @@ flet build ipa          # iOS (precisa de macOS + Xcode + conta Apple Developer)
 ```
 
 O `preparar_build.py` copia o `nucleo` para `src/nucleo` do app, porque o `flet build` empacota só a pasta do app.
+
+## App Idiomas
+
+`apps/app_idiomas` usa o login padrão com a paleta preto/verde neon. Depois de entrar:
+
+- barra superior: menu (configurações e conta) à esquerda, logo no centro, língua que está aprendendo à direita;
+- abaixo dela, as áreas (Básico, Comida, Gramática), cada uma com perguntas diferentes;
+- no meio, a trilha: estações interligadas com n perguntas cada; a próxima libera quando a anterior é concluída;
+- no rodapé, o botão de sugestão, que grava o feedback em `ctx.dados` (coleção `feedback`).
+
+O conteúdo fica em `src/conteudo.py`. Progresso, língua escolhida e sugestões ficam em `ctx.dados`.
 
 ## Novo app filho
 
