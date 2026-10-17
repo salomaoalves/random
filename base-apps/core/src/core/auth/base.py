@@ -48,10 +48,15 @@ class AuthService(ABC):
             observer(user)
 
     @staticmethod
-    def validate(email: str, password: str) -> tuple[str, str]:
+    def validate_email(email: str) -> str:
         email = (email or "").strip().lower()
         if not _EMAIL.match(email):
             raise AuthError("auth.invalid_email")
+        return email
+
+    @classmethod
+    def validate(cls, email: str, password: str) -> tuple[str, str]:
+        email = cls.validate_email(email)
         if len(password or "") < 6:
             raise AuthError("auth.short_password")
         return email, password
@@ -65,6 +70,10 @@ class AuthService(ABC):
     @abstractmethod
     def sign_in_google(self, page: Any) -> User | None:
         """Returns None if the user cancels. `page` allows using Flet's `page.login()`."""
+
+    @abstractmethod
+    def send_password_reset(self, email: str) -> None:
+        """Sends the reset link. Must not reveal whether the account exists."""
 
     def sign_out(self) -> None:
         self._set_user(None)

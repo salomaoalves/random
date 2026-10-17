@@ -78,6 +78,10 @@ def error_message() -> ft.Text:
     return ft.Text("", color="#EF4444", text_align=ft.TextAlign.CENTER, visible=False)
 
 
+def info_message(theme: Theme) -> ft.Text:
+    return ft.Text("", color=theme.primary_color, text_align=ft.TextAlign.CENTER, visible=False)
+
+
 def footer(cfg: Footer, theme: Theme, t: Translate = str) -> ft.Column:
     links = [
         ft.Text(spans=[ft.TextSpan(t(link.label), url=link.url, style=ft.TextStyle(decoration=ft.TextDecoration.UNDERLINE))],

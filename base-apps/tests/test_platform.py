@@ -63,6 +63,13 @@ def find(ctrl, predicate):
     return None
 
 
+def forgot_password(page):
+    find(page.controls[0], lambda c: getattr(c, "label", None) == "Email").value = "ana@example.com"
+    click(page, "Forgot password")
+    info = find(page.controls[0], lambda c: getattr(c, "value", None) == CORE_STRINGS["en"]["login.reset_sent"])
+    assert info is not None and info.visible, "reset message did not show up"
+
+
 def click(page, label):
     button = find(page.controls[0], lambda c: getattr(c, "content", None) == label)
     assert button is not None, f"button {label!r} not found"
@@ -92,6 +99,17 @@ class TestAuth(unittest.TestCase):
         auth.sign_in_email("ana@example.com", "123456")
         self.assertEqual([e.email if e else None for e in events],
                          ["ana@example.com", None, "ana@example.com"])
+
+    def test_password_reset(self):
+        auth = MemoryAuth()
+        auth.sign_up_email("ana@example.com", "123456")
+        auth.sign_out()
+        auth.send_password_reset(" Ana@Example.com ")
+        auth.send_password_reset("nobody@example.com")   # no account: neither fails nor sends
+        self.assertEqual(auth.sent_password_resets, ["ana@example.com"])
+        self.assertIsNone(auth.current_user)             # asking for a reset does not sign in
+        with self.assertRaises(AuthError):
+            auth.send_password_reset("invalid")
 
     def test_validation(self):
         with self.assertRaises(AuthError) as invalid:
@@ -151,6 +169,8 @@ class TestApps(unittest.TestCase):
         page = start(create_main(config, screens.build_app), FakePage())
         self.assertEqual(len(page.controls), 1)          # login screen
         self.assertIsNone(page.navigation_bar)
+        forgot_password(page)
+        self.assertIsNone(page.navigation_bar)           # still on the login screen
         click(page, "Continue with Google")
         self.assertIsNotNone(page.navigation_bar)        # tab layout
 
@@ -158,6 +178,7 @@ class TestApps(unittest.TestCase):
         config, screens = load_app("app_beta")
         page = start(create_main(config, screens.build_app, build_login=screens.login_screen), FakePage())
         self.assertIsNone(page.drawer)
+        forgot_password(page)
         click(page, "Continue with Google")
         self.assertIsNotNone(page.drawer)                # side menu layout
         page.floating_action_button.on_click(None)       # creates a record

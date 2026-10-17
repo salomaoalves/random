@@ -14,6 +14,7 @@ class MemoryAuth(AuthService):
     def __init__(self) -> None:
         super().__init__()
         self._accounts: dict[str, tuple[bytes, bytes, User]] = {}
+        self.sent_password_resets: list[str] = []  # stands in for the outgoing email box
 
     @staticmethod
     def _hash(password: str, salt: bytes) -> bytes:
@@ -36,6 +37,11 @@ class MemoryAuth(AuthService):
             raise AuthError("auth.wrong_credentials")
         self._set_user(account[2])
         return account[2]
+
+    def send_password_reset(self, email: str) -> None:
+        email = self.validate_email(email)
+        if email in self._accounts:
+            self.sent_password_resets.append(email)
 
     def sign_in_google(self, page: Any) -> User | None:
         user = User(id="google-dev", email="dev@gmail.com", name="Google user (dev)", provider="google")
