@@ -26,7 +26,7 @@ base-apps/
 
 | Muda entre apps (filho) | Igual em todos (pai) |
 |---|---|
-| `src/app_config.py`: nome, cores, logo, rodapé, credenciais do banco | Login, cadastro, Google, sessão |
+| `src/app_config.py`: nome, cores, logo, rodapé, credenciais do banco | Login, cadastro, esqueci a senha, Google, sessão |
 | `src/strings.py`: textos do app em cada idioma | Textos do login e mensagens de erro em cada idioma |
 | `src/screens.py`: telas, navegação, layout, login próprio (opcional) | Blocos de UI e tela de login padrão |
 | | Interface de dados e a implementação do banco |

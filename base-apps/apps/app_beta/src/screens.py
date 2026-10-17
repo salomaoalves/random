@@ -12,7 +12,9 @@ def login_screen(ctx: Context) -> ft.Control:
     cfg, theme = ctx.config, ctx.config.theme
     form = LoginForm(ctx)
     email_card = ft.Container(
-        content=ft.Column([form.email, form.password, form.error, form.sign_in_button, form.sign_up_button],
+        content=ft.Column([form.email, form.password, form.error, form.info, form.sign_in_button,
+                           ft.Row([form.sign_up_button, form.forgot_password_button],
+                                  alignment=ft.MainAxisAlignment.SPACE_BETWEEN)],
                           horizontal_alignment=ft.CrossAxisAlignment.STRETCH, spacing=12),
         padding=ft.Padding.all(20),
         bgcolor=theme.surface_color,

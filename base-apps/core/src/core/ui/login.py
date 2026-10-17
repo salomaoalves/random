@@ -22,18 +22,22 @@ class LoginForm:
         self.email = c.field(t("login.email"), theme, email=True)
         self.password = c.field(t("login.password"), theme, password=True)
         self.error = c.error_message()
+        self.info = c.info_message(theme)
         self.sign_in_button = c.primary_button(t("login.sign_in"), self.sign_in, theme)
         self.sign_up_button = ft.TextButton(content=t("login.sign_up"), on_click=self.sign_up)
         self.google_button = c.google_button(t("login.google"), self.sign_in_google)
+        self.forgot_password_button = ft.TextButton(content=t("login.forgot_password"), on_click=self.forgot_password)
 
-    def _run(self, action) -> None:
-        self.error.visible = False
-        buttons = (self.sign_in_button, self.sign_up_button, self.google_button)
+    def _run(self, action, success_key: str = "") -> None:
+        self.error.visible = self.info.visible = False
+        buttons = (self.sign_in_button, self.sign_up_button, self.google_button, self.forgot_password_button)
         for b in buttons:
             b.disabled = True
         self.ctx.page.update()
         try:
             action()
+            if success_key:
+                self.info.value, self.info.visible = self.ctx.t(success_key), True
         except AuthError as e:
             self.error.value, self.error.visible = self.ctx.t(e.key), True
         except Exception:
@@ -52,6 +56,9 @@ class LoginForm:
     def sign_in_google(self, _=None) -> None:
         self._run(lambda: self.ctx.auth.sign_in_google(self.ctx.page))
 
+    def forgot_password(self, _=None) -> None:
+        self._run(lambda: self.ctx.auth.send_password_reset(self.email.value), success_key="login.reset_sent")
+
 
 def default_login_screen(ctx: "Context") -> ft.Control:
     cfg, theme = ctx.config, ctx.config.theme
@@ -65,9 +72,10 @@ def default_login_screen(ctx: "Context") -> ft.Control:
                 form.email,
                 form.password,
                 form.error,
+                form.info,
                 form.sign_in_button,
                 form.google_button,
-                form.sign_up_button,
+                ft.Row([form.sign_up_button, form.forgot_password_button], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
                 c.footer(cfg.footer, theme, ctx.t),
             ],
             alignment=ft.MainAxisAlignment.CENTER,
