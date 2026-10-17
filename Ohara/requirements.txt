@@ -1,0 +1,6 @@
+anthropic>=1.15
+pydantic>=2
+pillow
+python-docx
+# optional: iPhone .heic photos
+# pillow-heif
