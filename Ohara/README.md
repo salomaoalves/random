@@ -1,11 +1,11 @@
-# NotebookToDocs
+# Ohara
 
 Transforma fotos de anotações (caderno, folhas, quadro) num documento `.docx` que abre direto no Google Docs, mantendo o layout: títulos e subtítulos, parágrafos e recuos, listas e sublistas, **negrito**, <u>sublinhado</u>, ~~riscado~~, marca-texto, cores de caneta, tabelas e diagramas.
 
 A leitura das fotos é feita pelo Claude (API da Anthropic), que devolve cada página como uma lista de blocos com formatação; o script monta o `.docx` a partir disso.
 
 ```
-NotebookToDocs/
+Ohara/
 ├── images/           coloque as fotos aqui (não vão para o git)
 ├── transcribe.py     script principal
 ├── schema.py         estrutura de cada página (blocos, trechos, diagramas)
