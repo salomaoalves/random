@@ -1,7 +1,7 @@
-from config_app import CONFIG
-from telas import montar_app, tela_login
+from app_config import CONFIG
+from screens import build_app, login_screen
 
-from nucleo import iniciar_app
+from core import run_app
 
-# App Beta substitui a tela de login padrão pela própria.
-iniciar_app(CONFIG, montar_app, montar_login=tela_login)
+# App Beta replaces the default login screen with its own.
+run_app(CONFIG, build_app, build_login=login_screen)
