@@ -14,6 +14,7 @@ class Theme:
     text_color: str = "#FFFFFF"
     surface_color: str = "#1E293B"
     dark: bool = True
+    on_primary_color: str = "#FFFFFF"  # text/icons over the primary color (e.g. black over neon green)
 
 
 @dataclass(frozen=True)

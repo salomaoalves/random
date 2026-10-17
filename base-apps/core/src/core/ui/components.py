@@ -25,7 +25,7 @@ def logo(cfg: Logo, theme: Theme) -> ft.Control:
         image = ft.Image(src=cfg.src, width=cfg.width, height=cfg.height, fit=ft.BoxFit.CONTAIN)
     else:
         image = ft.Container(
-            content=ft.Icon(icon(cfg.icon), size=cfg.width * 0.5, color=theme.text_color),
+            content=ft.Icon(icon(cfg.icon), size=cfg.width * 0.5, color=theme.on_primary_color),
             width=cfg.width,
             height=cfg.height,
             bgcolor=theme.primary_color,
@@ -58,7 +58,7 @@ def primary_button(label: str, on_click: Action, theme: Theme) -> ft.Button:
         content=label,
         on_click=on_click,
         bgcolor=theme.primary_color,
-        color="#FFFFFF",
+        color=theme.on_primary_color,
         style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=10), padding=ft.Padding.symmetric(vertical=16)),
     )
 

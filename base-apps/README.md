@@ -15,7 +15,8 @@ base-apps/
 │       └── app.py           create_main/run_app: idioma do aparelho, troca entre login e app
 ├── apps/
 │   ├── app_alpha/           abas inferiores + lista; usa o login padrão
-│   └── app_beta/            menu lateral + grade; login próprio
+│   ├── app_beta/            menu lateral + grade; login próprio
+│   └── app_bheh/            Bheh, app de idiomas: cursos, áreas, trilha de estações, sugestões
 ├── scripts/
 │   ├── new_app.py           cria um filho novo a partir de outro
 │   └── prepare_build.py     copia o core para o app antes do build
@@ -62,6 +63,17 @@ flet build ipa          # iOS (precisa de macOS + Xcode + conta Apple Developer)
 ```
 
 O `prepare_build.py` copia o `core` para `src/core` do app, porque o `flet build` empacota só a pasta do app.
+
+## Bheh
+
+`apps/app_bheh` usa o login padrão com a paleta preto/verde neon. Depois de entrar:
+
+- barra superior: menu (configurações e conta) à esquerda, logo no centro, língua que está aprendendo à direita;
+- abaixo dela, as áreas (Básico, Comida, Gramática), cada uma com perguntas diferentes;
+- no meio, a trilha: estações interligadas com n perguntas cada; a próxima libera quando a anterior é concluída;
+- no rodapé, o botão de sugestão, que grava o feedback em `ctx.data` (coleção `feedback`).
+
+O conteúdo fica em `src/content.py`: enunciados e respostas no idioma do usuário vêm em inglês e português; o que está na língua estudada fica como texto simples. Progresso, curso escolhido e sugestões ficam em `ctx.data`.
 
 ## Novo app filho
 
