@@ -3,7 +3,7 @@
 Small video toolkit built on [MoviePy](https://zulko.github.io/moviepy/): it converts `.avi` videos to `.mp4` and stitches several videos together into a single one.
 
 ## Why "Rapsodo"?
-A **rapsodo** (*rhapsode*, from the Greek *rhapsōidós*) was not a god, but a professional performer of ancient Greece who travelled from city to city reciting epic poetry, above all Homer's *Iliad* and *Odyssey*, at festivals and competitions. The rhapsodes were the "voice" of the Muses and of Apollo's art: they kept the great poems alive long before they were written down.
+A **rapsodo** (*rhapsode*, from the Greek *rhapsōidós*) was a professional performer of ancient Greece who travelled from city to city reciting epic poetry, above all Homer's *Iliad* and *Odyssey*, at festivals and competitions. The rhapsodes were the "voice" of the Muses and of Apollo's art: they kept the great poems alive long before they were written down.
 
 The name itself explains the link: *rhapsōidós* comes from *rháptein* ("to stitch, to sew") + *ōidḗ* ("song"), so a rhapsode was literally a **"stitcher of songs"**. He joined separate episodes and verses into one continuous performance, and that is exactly what this project does with videos: it takes separate pieces and sews them into a single, continuous video.
 
