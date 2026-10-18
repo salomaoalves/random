@@ -1,0 +1,92 @@
+{
+  "name": {
+    "en": "Grammar",
+    "pt": "Gramática",
+    "es": "Gramática"
+  },
+  "icon": "menu_book",
+  "stations": [
+    {
+      "title": {
+        "en": "Word order (SVO)",
+        "pt": "Ordem SVO"
+      },
+      "questions": [
+        {
+          "prompt": {
+            "en": "Which sentence is subject-verb-object?",
+            "pt": "Qual frase está na ordem sujeito-verbo-objeto?"
+          },
+          "options": [
+            "Pan como yo",
+            "Como pan yo",
+            "Yo como pan"
+          ],
+          "answer": 2
+        },
+        {
+          "prompt": {
+            "en": "In \"Ella lee un libro\", the verb is…",
+            "pt": "Em \"Ella lee un libro\", o verbo é…"
+          },
+          "options": [
+            "lee",
+            "Ella",
+            "libro"
+          ],
+          "answer": 0
+        },
+        {
+          "prompt": {
+            "en": "In \"Nosotros vemos la película\", the object is…",
+            "pt": "Em \"Nosotros vemos la película\", o objeto é…"
+          },
+          "options": [
+            "Nosotros",
+            "vemos",
+            "la película"
+          ],
+          "answer": 2
+        }
+      ]
+    },
+    {
+      "title": {
+        "en": "Ser and estar",
+        "pt": "Ser e estar"
+      },
+      "questions": [
+        {
+          "prompt": "\"Yo ___ brasileño.\"",
+          "options": [
+            "estoy",
+            "soy",
+            "es"
+          ],
+          "answer": 1
+        },
+        {
+          "prompt": "\"Ella ___ cansada hoy.\"",
+          "options": [
+            "es",
+            "soy",
+            "está"
+          ],
+          "answer": 2
+        },
+        {
+          "prompt": {
+            "en": "For a location we use…",
+            "pt": "Para lugar usamos…"
+          },
+          "options": [
+            "ser",
+            "estar",
+            "tener"
+          ],
+          "answer": 1
+        }
+      ]
+    }
+  ]
+}

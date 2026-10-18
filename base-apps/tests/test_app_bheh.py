@@ -5,7 +5,10 @@ Run from the root:  python -m unittest discover tests
 
 import asyncio
 import importlib
+import json
+import shutil
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 from types import SimpleNamespace
@@ -98,7 +101,7 @@ class BhehTestCase(unittest.TestCase):
 class TestBheh(BhehTestCase):
     def answer_station(self):
         prompts = {self.ctx.i18n.localize(q.prompt): q
-                   for s in self.content.SPANISH.area("basics").stations for q in s.questions}
+                   for s in self.content.load_course("es").area("basics").stations for q in s.questions}
         controls = ("Next", "See result", "Back to the path")
         while True:
             buttons = find_all(self.screen(), lambda c: isinstance(c, ft.Button) and not c.disabled
@@ -138,7 +141,7 @@ class TestBheh(BhehTestCase):
 
     def test_wrong_answer_shows_right_one(self):
         self.stations()[0].on_click(None)
-        question = self.content.SPANISH.area("basics").stations[0].questions[0]
+        question = self.content.load_course("es").area("basics").stations[0].questions[0]
         options = [self.ctx.i18n.localize(o) for o in question.options]
         buttons = find_all(self.screen(), lambda c: isinstance(c, ft.Button) and c.content in options)
         buttons[(question.answer + 1) % 3].on_click(None)
@@ -157,6 +160,15 @@ class TestBheh(BhehTestCase):
         self.assertTrue(next(i for i in self.page.appbar.actions[0].items if i.content == "English").checked)
         prefs = self.ctx.data.list("preferences", {"owner": self.ctx.user.id})
         self.assertEqual([p["course"] for p in prefs], ["en"])        # remembered on the next login
+
+    def test_switching_course_loads_its_folder(self):
+        english = next(i for i in self.page.appbar.actions[0].items if i.content == "English")
+        english.on_click(None)
+        self.stations()[0].on_click(None)
+        expected = self.content.load_course("en").area("basics").stations[0].questions[0]
+        self.assertIn(self.ctx.i18n.localize(expected.prompt), texts(self.screen()))   # from courses/en/
+        self.assertIn("Greetings · 1/3", texts(self.screen()))
+        self.assertNotIn('How do you say "good morning"?', texts(self.screen()))   # the Spanish one
 
     def test_settings_and_account_menu(self):
         event = SimpleNamespace(control=SimpleNamespace(selected_index=2))
@@ -195,6 +207,35 @@ class TestBhehInPortuguese(BhehTestCase):
         self.assertIn('Como se diz "bom dia"?', texts(self.screen()))
 
 
+class TestCourseFolders(unittest.TestCase):
+    def setUp(self):
+        self.content = load()[2]
+        self.tmp = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, self.tmp)
+        shutil.copytree(self.content.COURSES_DIR, self.tmp, dirs_exist_ok=True)
+
+    def test_every_folder_is_a_course(self):
+        ids = [c.id for c in self.content.available_courses()]
+        folders = sorted(p.name for p in self.content.COURSES_DIR.iterdir() if (p / "course.json").is_file())
+        self.assertEqual(sorted(ids), folders)
+        self.assertEqual(ids[0], "es")                                # default course first
+
+    def test_new_folder_needs_no_code(self):
+        shutil.copytree(self.tmp / "es", self.tmp / "fr")
+        meta = json.loads((self.tmp / "fr" / "course.json").read_text())
+        meta["name"] = {"en": "French", "pt": "Francês"}
+        (self.tmp / "fr" / "course.json").write_text(json.dumps(meta))
+        self.assertIn("fr", [c.id for c in self.content.available_courses(self.tmp)])
+        self.assertEqual(self.content.load_course("fr", self.tmp).name["en"], "French")
+
+    def test_invalid_answer_is_reported(self):
+        area = json.loads((self.tmp / "es" / "food.json").read_text())
+        area["stations"][0]["questions"][0]["answer"] = 9
+        (self.tmp / "es" / "food.json").write_text(json.dumps(area))
+        with self.assertRaisesRegex(ValueError, "food.json station 1 question 1"):
+            self.content.load_course("es", self.tmp)
+
+
 class TestCatalogs(unittest.TestCase):
     def test_strings_complete(self):
         strings = load()[0].strings
@@ -205,7 +246,7 @@ class TestCatalogs(unittest.TestCase):
         _, _, content = load()
         for language in ("en", "pt"):
             t = Translator({"en": {}, "pt": {}}, language)
-            for course in content.COURSES:
+            for course in (content.load_course(c.id) for c in content.available_courses()):
                 for area in course.areas:
                     self.assertTrue(area.stations, f"{course.id}/{area.id} has no stations")
                     for station in area.stations:

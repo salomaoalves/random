@@ -19,7 +19,7 @@ RIGHT_COLOR, WRONG_COLOR = "#16A34A", "#DC2626"
 class BhehApp:
     def __init__(self, ctx: Context) -> None:
         self.ctx, self.page, self.theme, self.t = ctx, ctx.page, ctx.config.theme, ctx.t
-        self.course = ct.course(self._saved_course())
+        self.course = ct.load_course(self._saved_course())
         self.area = self.course.areas[0]
         self.body = ft.SafeArea(content=ft.Container(), expand=True)
 
@@ -34,7 +34,7 @@ class BhehApp:
 
     def _saved_course(self) -> str:
         prefs = self.ctx.data.list(PREFERENCES, self._owner)
-        return prefs[0]["course"] if prefs else ct.COURSES[0].id
+        return prefs[0]["course"] if prefs else ct.available_courses()[0].id
 
     def _save_course(self) -> None:
         prefs = self.ctx.data.list(PREFERENCES, self._owner)
@@ -97,9 +97,9 @@ class BhehApp:
             icon=ft.Icons.TRANSLATE,
             icon_color=self.theme.primary_color,
             tooltip=self.t("course.tooltip"),
-            items=[ft.PopupMenuItem(content=self.t(x.name_key), checked=x.id == self.course.id,
+            items=[ft.PopupMenuItem(content=self.text(x.name), checked=x.id == self.course.id,
                                     on_click=lambda _, id_=x.id: self.switch_course(id_))
-                   for x in ct.COURSES],
+                   for x in ct.available_courses()],
         )
 
     def _show(self, control: ft.Control, with_feedback: bool, refresh: bool = True) -> None:
@@ -118,7 +118,8 @@ class BhehApp:
     # ---- actions -------------------------------------------------------------
 
     def switch_course(self, id_: str) -> None:
-        self.course = ct.course(id_)
+        """Loads the questions from the chosen course's folder (courses/<id>/)."""
+        self.course = ct.load_course(id_)
         self.area = self.course.area(self.area.id)
         self._save_course()
         self.page.appbar.actions = [self._course_menu()]
@@ -140,7 +141,7 @@ class BhehApp:
         for a in self.course.areas:
             active = a.id == self.area.id
             chips.append(ft.Chip(
-                label=ft.Text(self.t(a.name_key), color=theme.on_primary_color if active else theme.text_color),
+                label=ft.Text(self.text(a.name), color=theme.on_primary_color if active else theme.text_color),
                 leading=ft.Icon(c.icon(a.icon), color=theme.on_primary_color if active else theme.primary_color),
                 selected=active, show_checkmark=False,
                 selected_color=theme.primary_color, bgcolor=theme.surface_color,
@@ -152,7 +153,7 @@ class BhehApp:
         theme, stations = self.theme, self.area.stations
         done = self._completed()
         items: list[ft.Control] = [
-            c.title(f"{self.t(self.course.name_key)} · {self.t(self.area.name_key)}", theme, 20),
+            c.title(f"{self.text(self.course.name)} · {self.text(self.area.name)}", theme, 20),
             ft.Text(self.t("path.progress", done=len(done), total=len(stations)), color=theme.text_color,
                     opacity=0.7, text_align=ft.TextAlign.CENTER),
             ft.Container(height=12),
@@ -264,8 +265,8 @@ class BhehApp:
         group = ft.RadioGroup(
             value=self.course.id,
             on_change=lambda e: self.switch_course(e.control.value),
-            content=ft.Column([ft.Radio(value=x.id, label=t(x.name_key), active_color=theme.primary_color)
-                               for x in ct.COURSES]),
+            content=ft.Column([ft.Radio(value=x.id, label=self.text(x.name), active_color=theme.primary_color)
+                               for x in ct.available_courses()]),
         )
         self._show(ft.Column([c.title(t("menu.settings"), theme),
                               ft.Text(t("settings.course"), color=theme.text_color, opacity=0.7), group],

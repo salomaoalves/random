@@ -1,0 +1,54 @@
+{
+  "name": {
+    "en": "Food",
+    "pt": "Comida",
+    "es": "Comida"
+  },
+  "icon": "restaurant",
+  "stations": [
+    {
+      "title": {
+        "en": "Groceries",
+        "pt": "Mercado"
+      },
+      "questions": [
+        {
+          "prompt": {
+            "en": "Which one is a fruit?",
+            "pt": "Como se diz \"maçã\"?"
+          },
+          "options": [
+            "Apple",
+            "Chicken",
+            "Bread"
+          ],
+          "answer": 0
+        },
+        {
+          "prompt": {
+            "en": "Which one is made from milk?",
+            "pt": "Como se diz \"queijo\"?"
+          },
+          "options": [
+            "Chips",
+            "Cheese",
+            "Chicken"
+          ],
+          "answer": 1
+        },
+        {
+          "prompt": {
+            "en": "What do you drink when you are thirsty?",
+            "pt": "Como se diz \"água\"?"
+          },
+          "options": [
+            "Water",
+            "Bread",
+            "Rice"
+          ],
+          "answer": 0
+        }
+      ]
+    }
+  ]
+}

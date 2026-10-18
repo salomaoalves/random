@@ -73,7 +73,21 @@ O `prepare_build.py` copia o `core` para `src/core` do app, porque o `flet build
 - no meio, a trilha: estações interligadas com n perguntas cada; a próxima libera quando a anterior é concluída;
 - no rodapé, o botão de sugestão, que grava o feedback em `ctx.data` (coleção `feedback`).
 
-O conteúdo fica em `src/content.py`: enunciados e respostas no idioma do usuário vêm em inglês e português; o que está na língua estudada fica como texto simples. Progresso, curso escolhido e sugestões ficam em `ctx.data`.
+O conteúdo fica em pastas irmãs, uma por língua de aprendizado. Ao trocar a língua no menu (ou em Settings), o app carrega as perguntas da pasta dela:
+
+```
+apps/app_bheh/src/courses/
+├── es/                 Espanhol
+│   ├── course.json     nome do curso e ordem das áreas
+│   ├── basics.json     nome, ícone e estações da área (cada estação com suas perguntas)
+│   ├── food.json
+│   └── grammar.json
+└── en/                 Inglês (mesma estrutura)
+```
+
+Para criar um curso novo (ex.: francês), basta adicionar `courses/fr/` com os mesmos arquivos; não precisa mexer no código. Enunciados e respostas no idioma de quem estuda vêm como `{"en": ..., "pt": ...}`; o que está na língua estudada fica como texto simples. Cada pergunta indica a resposta certa pelo índice (`"answer": 0` é a primeira opção). Os testes conferem todas as pastas. Como `courses/` fica dentro de `src/`, entra no `flet build`.
+
+Progresso, curso escolhido e sugestões ficam em `ctx.data`.
 
 ## Novo app filho
 
