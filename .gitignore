@@ -1,2 +1,13 @@
 __pycache__/
 *.pyc
+.cache
+
+Rapsodo/videos_input/*
+Rapsodo/videos_output/*
+Rapsodo/videos_2convert/*
+Rapsodo/videos_converted/*
+
+!Rapsodo/videos_input/.gitkeep
+!Rapsodo/videos_output/.gitkeep
+!Rapsodo/videos_2convert/.gitkeep
+!Rapsodo/videos_converted/.gitkeep
