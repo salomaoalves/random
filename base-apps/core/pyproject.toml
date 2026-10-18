@@ -1,7 +1,7 @@
 [project]
-name = "nucleo"
+name = "base-apps-core"
 version = "1.0.0"
-description = "Pacote pai: login, auth, dados e blocos de UI compartilhados pelos apps filhos"
+description = "Parent package: login, auth, data, i18n and UI blocks shared by the child apps"
 requires-python = ">=3.10"
 dependencies = ["flet>=1.0,<2"]
 

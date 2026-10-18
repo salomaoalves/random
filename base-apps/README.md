@@ -1,22 +1,24 @@
 # Plataforma de apps — Python + Flet
 
-Um pacote pai (`nucleo`) e apps filhos (`app_alfa`, `app_beta`) que geram Android e iOS com o Flet 1.0.
+Um pacote pai (`core`) e apps filhos (`app_alpha`, `app_beta`) que geram Android e iOS com o Flet 1.0.
+O código é todo em inglês; a interface sai em inglês por padrão e no idioma do aparelho quando houver tradução.
 
 ```
-plataforma-apps/
-├── nucleo/                  pacote pai (igual em todos)
-│   └── src/nucleo/
-│       ├── config.py        contrato AppConfig: tema, logo, rodapé, dados, auth
-│       ├── dados/           interface Repositorio + implementação em memória
-│       ├── auth/            interface ServicoAuth + implementação em memória
+base-apps/
+├── core/                    pacote pai (igual em todos)
+│   └── src/core/
+│       ├── config.py        contrato AppConfig: tema, logo, rodapé, dados, auth, textos
+│       ├── i18n.py          textos por idioma (en padrão, pt, es) e Translator
+│       ├── data/            interface Repository + implementação em memória
+│       ├── auth/            interface AuthService + implementação em memória
 │       ├── ui/              blocos (logo, campo, botões, rodapé, cartão) + login padrão
-│       └── app.py           iniciar_app: troca entre login e app pelo estado de auth
+│       └── app.py           create_main/run_app: idioma do aparelho, troca entre login e app
 ├── apps/
-│   ├── app_alfa/            abas inferiores + lista; usa o login padrão
+│   ├── app_alpha/           abas inferiores + lista; usa o login padrão
 │   └── app_beta/            menu lateral + grade; login próprio
 ├── scripts/
-│   ├── novo_app.py          cria um filho novo a partir de outro
-│   └── preparar_build.py    copia o nucleo para o app antes do build
+│   ├── new_app.py           cria um filho novo a partir de outro
+│   └── prepare_build.py     copia o core para o app antes do build
 └── tests/
 ```
 
@@ -24,18 +26,27 @@ plataforma-apps/
 
 | Muda entre apps (filho) | Igual em todos (pai) |
 |---|---|
-| `src/config_app.py`: nome, cores, logo, rodapé, credenciais do banco | Login, cadastro, Google, sessão |
-| `src/telas.py`: telas, navegação, layout, login próprio (opcional) | Blocos de UI e tela de login padrão |
+| `src/app_config.py`: nome, cores, logo, rodapé, credenciais do banco | Login, cadastro, Google, sessão |
+| `src/strings.py`: textos do app em cada idioma | Textos do login e mensagens de erro em cada idioma |
+| `src/screens.py`: telas, navegação, layout, login próprio (opcional) | Blocos de UI e tela de login padrão |
 | | Interface de dados e a implementação do banco |
 
-Como o banco é o mesmo em todos, a implementação dele fica no pai. Cada filho só aponta para a própria instância (`projeto`, `url`, `chave`).
+Como o banco é o mesmo em todos, a implementação dele fica no pai. Cada filho só aponta para a própria instância (`project`, `url`, `key`).
+
+## Idiomas
+
+- Ao abrir, o `core` lê os idiomas do aparelho (`page.get_device_info()`) e usa o primeiro que tiver tradução; sem nenhum, usa inglês. Se o usuário trocar o idioma do sistema com o app aberto (`page.on_locale_change`), a tela é refeita no idioma novo.
+- Nas telas, use `ctx.t("chave")` (aceita valores: `ctx.t("dashboard.record", number=3)`). Chave sem tradução cai no inglês e, se nem lá existir, aparece como está, então texto fixo também funciona.
+- Conteúdo que carrega a própria tradução (ex.: perguntas) pode ser `{"en": ..., "pt": ...}` e é resolvido com `ctx.i18n.localize(valor)`.
+- Para um idioma novo, acrescente o código (ex.: `"fr"`) em `CORE_STRINGS` e no `strings.py` de cada app. Os testes conferem se todos os idiomas têm as mesmas chaves.
+- O idioma vem do aparelho, não da conta Google: o login do Google não garante esse dado.
 
 ## Rodar
 
 ```bash
 python -m venv .venv && source .venv/bin/activate
-pip install -e ./nucleo
-cd apps/app_alfa && flet run src/main.py     # janela no computador
+pip install -e ./core
+cd apps/app_alpha && flet run src/main.py     # janela no computador
 flet run --android src/main.py               # no celular, via app Flet (mesma rede)
 ```
 
@@ -44,32 +55,32 @@ Testes (sem abrir janela): `python -m unittest discover tests`
 ## Gerar Android / iOS
 
 ```bash
-python scripts/preparar_build.py app_alfa
-cd apps/app_alfa
+python scripts/prepare_build.py app_alpha
+cd apps/app_alpha
 flet build apk          # Android
 flet build ipa          # iOS (precisa de macOS + Xcode + conta Apple Developer)
 ```
 
-O `preparar_build.py` copia o `nucleo` para `src/nucleo` do app, porque o `flet build` empacota só a pasta do app.
+O `prepare_build.py` copia o `core` para `src/core` do app, porque o `flet build` empacota só a pasta do app.
 
 ## Novo app filho
 
 ```bash
-python scripts/novo_app.py app_gama "App Gama"                  # copia o app_alfa
-python scripts/novo_app.py app_gama "App Gama" --base app_beta  # copia o app_beta
+python scripts/new_app.py app_gamma "App Gamma"                  # copia o app_alpha
+python scripts/new_app.py app_gamma "App Gamma" --base app_beta  # copia o app_beta
 ```
 
-Depois edite `config_app.py` e `telas.py`, e troque `org`/`product` no `pyproject.toml`.
+Depois edite `app_config.py`, `strings.py` e `screens.py`, e troque `org`/`product` no `pyproject.toml`.
 
 ## Quando o banco for definido
 
-1. Crie `nucleo/src/nucleo/dados/<provedor>.py` com uma subclasse de `Repositorio` (5 métodos: `listar`, `obter`, `criar`, `atualizar`, `remover`).
-2. Registre em `nucleo/src/nucleo/dados/__init__.py`, em `_PROVEDORES`.
-3. Nos filhos, troque `provedor="memoria"` pelo nome novo. As telas não mudam.
+1. Crie `core/src/core/data/<provedor>.py` com uma subclasse de `Repository` (5 métodos: `list`, `get`, `create`, `update`, `delete`).
+2. Registre em `core/src/core/data/__init__.py`, em `_PROVIDERS`.
+3. Nos filhos, troque `provider="memory"` pelo nome novo. As telas não mudam.
 
-Auth segue o mesmo padrão em `nucleo/src/nucleo/auth/`. O Google real pode usar `page.login()` do Flet dentro de `entrar_google(page)`. Hoje, em modo memória, ele só simula um usuário.
+Auth segue o mesmo padrão em `core/src/core/auth/`. O Google real pode usar `page.login()` do Flet dentro de `sign_in_google(page)`. Hoje, em modo memória, ele só simula um usuário. Erros de auth levam uma chave de tradução (`AuthError("auth.invalid_email")`), e a tela mostra o texto no idioma atual.
 
-Credenciais vêm de variáveis de ambiente (`ALFA_DB_URL`, `ALFA_DB_CHAVE`, `ALFA_GOOGLE_CLIENT_ID`…), nunca escritas no código.
+Credenciais vêm de variáveis de ambiente (`ALPHA_DB_URL`, `ALPHA_DB_KEY`, `ALPHA_GOOGLE_CLIENT_ID`…), nunca escritas no código.
 
 ## Pendências
 

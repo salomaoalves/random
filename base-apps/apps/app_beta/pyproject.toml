@@ -3,14 +3,14 @@ name = "app-beta"
 version = "1.0.0"
 description = "App Beta"
 requires-python = ">=3.10"
-# O nucleo entra no build pelo scripts/preparar_build.py (copiado para src/).
+# The core package enters the build through scripts/prepare_build.py (copied into src/).
 dependencies = ["flet>=1.0,<2"]
 
 [tool.flet]
-org = "com.suaempresa"
+org = "com.yourcompany"
 product = "App Beta"
-company = "Sua Empresa"
-copyright = "© 2026 Sua Empresa"
+company = "Your Company"
+copyright = "© 2026 Your Company"
 
 [tool.flet.app]
 path = "src"
