@@ -1,0 +1,16 @@
+[project]
+name = "app-bheh"
+version = "1.0.0"
+description = "Bheh"
+requires-python = ">=3.10"
+# The core package enters the build through scripts/prepare_build.py (copied into src/).
+dependencies = ["flet>=1.0,<2"]
+
+[tool.flet]
+org = "com.yourcompany"
+product = "Bheh"
+company = "Your Company"
+copyright = "© 2026 Your Company"
+
+[tool.flet.app]
+path = "src"

@@ -1,0 +1,54 @@
+{
+  "name": {
+    "en": "Basics",
+    "pt": "Básico",
+    "es": "Básico"
+  },
+  "icon": "waving_hand",
+  "stations": [
+    {
+      "title": {
+        "en": "Greetings",
+        "pt": "Cumprimentos"
+      },
+      "questions": [
+        {
+          "prompt": {
+            "en": "Say goodbye at night:",
+            "pt": "Como se diz \"boa noite\" ao se despedir?"
+          },
+          "options": [
+            "Good night",
+            "Good morning",
+            "Good afternoon"
+          ],
+          "answer": 0
+        },
+        {
+          "prompt": {
+            "en": "Which one asks how someone is?",
+            "pt": "Como se pergunta \"como você está?\""
+          },
+          "options": [
+            "How are you?",
+            "Who are you?",
+            "How old are you?"
+          ],
+          "answer": 0
+        },
+        {
+          "prompt": {
+            "en": "Reply to \"Thank you\":",
+            "pt": "Resposta para \"Thank you\":"
+          },
+          "options": [
+            "You're welcome",
+            "Excuse me",
+            "I'm sorry"
+          ],
+          "answer": 0
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,51 @@
+{
+  "name": {
+    "en": "Grammar",
+    "pt": "Gramática",
+    "es": "Gramática"
+  },
+  "icon": "menu_book",
+  "stations": [
+    {
+      "title": {
+        "en": "Word order",
+        "pt": "Ordem das palavras"
+      },
+      "questions": [
+        {
+          "prompt": {
+            "en": "Which sentence is subject-verb-object?",
+            "pt": "Qual frase está na ordem sujeito-verbo-objeto?"
+          },
+          "options": [
+            "Books reads she",
+            "Reads she books",
+            "She reads books"
+          ],
+          "answer": 2
+        },
+        {
+          "prompt": {
+            "en": "In \"They play football\", the subject is…",
+            "pt": "Em \"They play football\", o sujeito é…"
+          },
+          "options": [
+            "play",
+            "They",
+            "football"
+          ],
+          "answer": 1
+        },
+        {
+          "prompt": "\"I ___ a student.\"",
+          "options": [
+            "am",
+            "is",
+            "are"
+          ],
+          "answer": 0
+        }
+      ]
+    }
+  ]
+}

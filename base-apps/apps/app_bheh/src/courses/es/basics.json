@@ -1,0 +1,125 @@
+{
+  "name": {
+    "en": "Basics",
+    "pt": "Básico",
+    "es": "Básico"
+  },
+  "icon": "waving_hand",
+  "stations": [
+    {
+      "title": {
+        "en": "Greetings",
+        "pt": "Saudações"
+      },
+      "questions": [
+        {
+          "prompt": {
+            "en": "How do you say \"good morning\"?",
+            "pt": "Como se diz \"bom dia\"?"
+          },
+          "options": [
+            "Buenos días",
+            "Buenas noches",
+            "Hasta luego"
+          ],
+          "answer": 0
+        },
+        {
+          "prompt": {
+            "en": "\"¿Cómo estás?\" means…",
+            "pt": "\"¿Cómo estás?\" significa…"
+          },
+          "options": [
+            {
+              "en": "How are you?",
+              "pt": "Como você está?"
+            },
+            {
+              "en": "Where are you?",
+              "pt": "Onde você está?"
+            },
+            {
+              "en": "Who are you?",
+              "pt": "Quem é você?"
+            }
+          ],
+          "answer": 0
+        },
+        {
+          "prompt": {
+            "en": "Polite reply to \"gracias\":",
+            "pt": "Resposta educada para \"gracias\":"
+          },
+          "options": [
+            "Lo siento",
+            "Perdón",
+            "De nada"
+          ],
+          "answer": 2
+        }
+      ]
+    },
+    {
+      "title": {
+        "en": "Introductions",
+        "pt": "Apresentação"
+      },
+      "questions": [
+        {
+          "prompt": {
+            "en": "\"Me llamo Ana\" means…",
+            "pt": "\"Me llamo Ana\" significa…"
+          },
+          "options": [
+            {
+              "en": "My name is Ana",
+              "pt": "Meu nome é Ana"
+            },
+            {
+              "en": "I call Ana",
+              "pt": "Eu chamo a Ana"
+            },
+            {
+              "en": "I like Ana",
+              "pt": "Eu gosto da Ana"
+            }
+          ],
+          "answer": 0
+        },
+        {
+          "prompt": {
+            "en": "How do you ask someone's age?",
+            "pt": "Como perguntar a idade?"
+          },
+          "options": [
+            "¿Cómo te llamas?",
+            "¿De dónde eres?",
+            "¿Cuántos años tienes?"
+          ],
+          "answer": 2
+        },
+        {
+          "prompt": {
+            "en": "\"Soy de Brasil\" means…",
+            "pt": "\"Soy de Brasil\" significa…"
+          },
+          "options": [
+            {
+              "en": "I am in Brazil",
+              "pt": "Estou no Brasil"
+            },
+            {
+              "en": "I am from Brazil",
+              "pt": "Sou do Brasil"
+            },
+            {
+              "en": "I am going to Brazil",
+              "pt": "Vou ao Brasil"
+            }
+          ],
+          "answer": 1
+        }
+      ]
+    }
+  ]
+}

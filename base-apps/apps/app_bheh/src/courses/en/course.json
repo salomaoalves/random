@@ -1,0 +1,12 @@
+{
+  "name": {
+    "en": "English",
+    "pt": "Inglês",
+    "es": "Inglés"
+  },
+  "areas": [
+    "basics",
+    "food",
+    "grammar"
+  ]
+}

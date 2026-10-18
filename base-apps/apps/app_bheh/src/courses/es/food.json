@@ -1,0 +1,134 @@
+{
+  "name": {
+    "en": "Food",
+    "pt": "Comida",
+    "es": "Comida"
+  },
+  "icon": "restaurant",
+  "stations": [
+    {
+      "title": {
+        "en": "At the market",
+        "pt": "No mercado"
+      },
+      "questions": [
+        {
+          "prompt": {
+            "en": "\"Manzana\" is…",
+            "pt": "\"Manzana\" é…"
+          },
+          "options": [
+            {
+              "en": "Butter",
+              "pt": "Manteiga"
+            },
+            {
+              "en": "Apple",
+              "pt": "Maçã"
+            },
+            {
+              "en": "Orange",
+              "pt": "Laranja"
+            }
+          ],
+          "answer": 1
+        },
+        {
+          "prompt": {
+            "en": "How do you say \"bread\"?",
+            "pt": "Como se diz \"pão\"?"
+          },
+          "options": [
+            "Pon",
+            "Pane",
+            "Pan"
+          ],
+          "answer": 2
+        },
+        {
+          "prompt": {
+            "en": "\"Leche\" is…",
+            "pt": "\"Leche\" é…"
+          },
+          "options": [
+            {
+              "en": "Lettuce",
+              "pt": "Alface"
+            },
+            {
+              "en": "Sausage",
+              "pt": "Linguiça"
+            },
+            {
+              "en": "Milk",
+              "pt": "Leite"
+            }
+          ],
+          "answer": 2
+        }
+      ]
+    },
+    {
+      "title": {
+        "en": "At the restaurant",
+        "pt": "No restaurante"
+      },
+      "questions": [
+        {
+          "prompt": {
+            "en": "To ask for the bill:",
+            "pt": "Para pedir a conta:"
+          },
+          "options": [
+            "El menú, por favor",
+            "Una mesa, por favor",
+            "La cuenta, por favor"
+          ],
+          "answer": 2
+        },
+        {
+          "prompt": {
+            "en": "\"Tengo hambre\" means…",
+            "pt": "\"Tengo hambre\" significa…"
+          },
+          "options": [
+            {
+              "en": "I'm hungry",
+              "pt": "Estou com fome"
+            },
+            {
+              "en": "I'm thirsty",
+              "pt": "Estou com sede"
+            },
+            {
+              "en": "I'm in a hurry",
+              "pt": "Estou com pressa"
+            }
+          ],
+          "answer": 0
+        },
+        {
+          "prompt": {
+            "en": "\"Cubiertos\" are…",
+            "pt": "\"Cubiertos\" são…"
+          },
+          "options": [
+            {
+              "en": "Glasses",
+              "pt": "Copos"
+            },
+            {
+              "en": "Cutlery",
+              "pt": "Talheres"
+            },
+            {
+              "en": "Napkins",
+              "pt": "Guardanapos"
+            }
+          ],
+          "answer": 1
+        }
+      ]
+    }
+  ]
+}
