@@ -13,9 +13,6 @@ Here, there is general functons that can be used - just random ones. The goal he
 ## remove_artist.py
 Export every track of a playlist to `musicas.txt` (sorted by artist). The removal of a given artist (`TARGET_ARTIST`) is commented out - uncomment it to remove that artist's tracks.
 
-## test.py
-Search a list of artists, get their top tracks and add them to an existing playlist (optionally clearing it first).
-
 ## random_artist_playlist.py
 Take one of the artist lists of `config.py` (`br`, `latina` or `geral`), get 5 random songs from each artist (from its albums and singles) and put them all in a new playlist.
 ```
