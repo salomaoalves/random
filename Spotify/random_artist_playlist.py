@@ -8,6 +8,7 @@ ARTIST_LISTS = {
     'latina': config.get_isthis_artist_latina,
     'geral': config.get_isthis_artist,
 }
+MODES = ('random', 'latest')
 
 
 def find_artist(sp, artist_name):
@@ -30,11 +31,12 @@ def get_all_items(sp, page):
     return items
 
 
-def random_artist_tracks(sp, artist_id, amount=5, pool_size=30, latest=False):
+def random_artist_tracks(sp, artist_id, amount=5, pool_size=30, mode="random"):
     '''Get AMOUNT random tracks from an artist, looking into its albums and singles in a random order
         (stops reading albums once there are POOL_SIZE different songs to choose from)
-        If LATEST, get instead its AMOUNT most recent songs (albums and singles from the newest to the oldest)'''
+        If MODE is 'latest', get instead its AMOUNT most recent songs (albums and singles from the newest to the oldest)'''
 
+    latest = mode == "latest"
     albums = get_all_items(sp, sp.artist_albums(artist_id, include_groups="album,single", limit=10))
     if latest:
         albums.sort(key=lambda album: album["release_date"], reverse=True) # YYYY-MM-DD (or YYYY-MM / YYYY)
@@ -57,23 +59,22 @@ def random_artist_tracks(sp, artist_id, amount=5, pool_size=30, latest=False):
     return random.sample(list(pool.values()), min(amount, len(pool)))
 
 
-def create_random_artist_playlist(playlist_name, list_type, tracks_per_artist=5, public=False, latest=False):
+def create_random_artist_playlist(playlist_name, list_type, tracks_per_artist=5, public=False, mode="random"):
     '''Get one of the artist lists of config.py (br | latina | geral), take TRACKS_PER_ARTIST random songs
         from each artist and put them all, shuffled, in a new playlist called PLAYLIST_NAME
-        If LATEST, take the TRACKS_PER_ARTIST most recent songs of each artist instead of random ones'''
+        MODE: 'random' (random songs) | 'latest' (the TRACKS_PER_ARTIST most recent songs of each artist)'''
 
     sp = config.connect("playlist-modify-public playlist-modify-private")
     artist_list = ARTIST_LISTS[list_type]()
 
-    kind = "latest" if latest else "random"
-    print(f"Getting {tracks_per_artist} {kind} songs from {len(artist_list)} artists ({list_type})...")
+    print(f"Getting {tracks_per_artist} {mode} songs from {len(artist_list)} artists ({list_type})...")
     track_uris = []
     for artist_name in artist_list:
         artist = find_artist(sp, artist_name)
         if not artist:
             print(f"   Artist '{artist_name}' not found. Skipping...")
             continue
-        tracks = random_artist_tracks(sp, artist["id"], tracks_per_artist, latest=latest)
+        tracks = random_artist_tracks(sp, artist["id"], tracks_per_artist, mode=mode)
         print(f"   + {len(tracks)} songs from {artist['name']}")
         track_uris.extend(tracks)
 
@@ -86,7 +87,7 @@ def create_random_artist_playlist(playlist_name, list_type, tracks_per_artist=5,
     playlist = sp._post("me/playlists", payload={
         "name": playlist_name,
         "public": public,
-        "description": f"{tracks_per_artist} {kind} songs from each artist of the '{list_type}' list"})
+        "description": f"{tracks_per_artist} {mode} songs from each artist of the '{list_type}' list"})
     for i in range(0, len(track_uris), 100): # spotify allow to add only 100 per time
         sp._post(f"playlists/{playlist['id']}/items", payload={"uris": track_uris[i:i+100]})
 
@@ -99,7 +100,7 @@ if __name__ == "__main__":
     parser.add_argument("list", choices=ARTIST_LISTS.keys(), help="which artist list to use")
     parser.add_argument("-n", "--tracks", type=int, default=5, help="songs per artist (default: 5)")
     parser.add_argument("--public", action="store_true", help="create a public playlist (default: private)")
-    parser.add_argument("--latest", action="store_true", help="get the most recent songs of each artist (default: random songs)")
+    parser.add_argument("-m", "--mode", choices=MODES, default="random", help="random songs or the most recent ones of each artist (default: random)")
     args = parser.parse_args()
 
-    create_random_artist_playlist(args.name, args.list, args.tracks, args.public, args.latest)
+    create_random_artist_playlist(args.name, args.list, args.tracks, args.public, args.mode)
