@@ -9,7 +9,7 @@ ARTIST_LISTS = {
     'geral': config.get_isthis_artist,
 }
 MODES = ('random', 'latest')
-DEFAULT_NAME_SUFFIX = {'br': 'br', 'latina': 'latina', 'geral': 'any'} # default playlist name: 'This is .. <suffix>'
+DEFAULT_NAME_SUFFIX = {'br': 'br', 'latina': 'latina', 'geral': 'any'} # default playlist name: 'This is.. <suffix>'
 
 
 def find_artist(sp, artist_name):
@@ -63,10 +63,10 @@ def random_artist_tracks(sp, artist_id, amount=5, pool_size=30, mode="random"):
 def create_random_artist_playlist(playlist_name, list_type, tracks_per_artist=5, public=False, mode="random"):
     '''Get one of the artist lists of config.py (br | latina | geral), take TRACKS_PER_ARTIST random songs
         from each artist and put them all, shuffled, in a new playlist called PLAYLIST_NAME
-        (when PLAYLIST_NAME is None, it is 'This is .. br' | 'This is .. latina' | 'This is .. any')
+        (when PLAYLIST_NAME is None, it is 'This is.. br' | 'This is.. latina' | 'This is.. any')
         MODE: 'random' (random songs) | 'latest' (the TRACKS_PER_ARTIST most recent songs of each artist)'''
 
-    playlist_name = playlist_name or f"This is .. {DEFAULT_NAME_SUFFIX[list_type]}"
+    playlist_name = playlist_name or f"This is.. {DEFAULT_NAME_SUFFIX[list_type]}"
     sp = config.connect("playlist-modify-public playlist-modify-private")
     artist_list = ARTIST_LISTS[list_type]()
 
@@ -99,7 +99,7 @@ def create_random_artist_playlist(playlist_name, list_type, tracks_per_artist=5,
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Create a playlist with random songs from one of the artist lists of config.py")
-    parser.add_argument("name", nargs="?", default=None, help="name of the new playlist (default: 'This is .. br|latina|any', from the list)")
+    parser.add_argument("name", nargs="?", default=None, help="name of the new playlist (default: 'This is.. br|latina|any', from the list)")
     parser.add_argument("list", choices=ARTIST_LISTS.keys(), help="which artist list to use")
     parser.add_argument("-n", "--tracks", type=int, default=5, help="songs per artist (default: 5)")
     parser.add_argument("--public", action="store_true", help="create a public playlist (default: private)")
