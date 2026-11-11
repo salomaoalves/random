@@ -29,3 +29,19 @@ python playlist_genres.py "Rock Brasil" --top 10           # only the 10 most co
 python playlist_genres.py "Rock Brasil" --songs 5          # show 5 songs of each genre (default: 3)
 python playlist_genres.py "https://open.spotify.com/playlist/..." --main-artist   # only the main artist of each song
 ```
+
+## playlist_artists.py
+Given the link (or name) of a public playlist, show all its artists and in how many songs each one appears.
+```
+python playlist_artists.py "https://open.spotify.com/playlist/..."              # most songs first
+python playlist_artists.py "https://open.spotify.com/playlist/..." --sort name  # by artist name
+python playlist_artists.py "Rock Brasil" --main-artist                          # only the main artist of each song
+```
+
+## similar_playlist.py
+Given the link (or name) of a public playlist, find its most common genres (the genres of its artists) and create a new playlist with songs of these genres, split by how common each genre is in the original playlist. By default, the artists of the original playlist are left out and the new playlist is called `Like <playlist name>`.
+```
+python similar_playlist.py "https://open.spotify.com/playlist/..."                  # 50 songs, 5 most common genres
+python similar_playlist.py "https://open.spotify.com/playlist/..." -n 30 -g 3 -N "My mix"
+python similar_playlist.py "Rock Brasil" --include-artists --public                 # also songs of the playlist's artists
+```
