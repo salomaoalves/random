@@ -9,6 +9,7 @@ ARTIST_LISTS = {
     'geral': config.get_isthis_artist,
 }
 MODES = ('random', 'latest')
+DEFAULT_NAMES = {'br': 'This is ..  br', 'latina': 'This is ..  latina', 'geral': 'This is ..'} # used when no name is given
 
 
 def find_artist(sp, artist_name):
@@ -59,12 +60,24 @@ def random_artist_tracks(sp, artist_id, amount=5, pool_size=30, mode="random"):
     return random.sample(list(pool.values()), min(amount, len(pool)))
 
 
+def find_my_playlist(sp, playlist_name):
+    '''Return the playlist of the logged user called exactly PLAYLIST_NAME (or None if there is none)'''
+    my_id = sp._get("me")["id"]
+    for playlist in get_all_items(sp, sp._get("me/playlists", limit=50)):
+        if playlist and playlist["name"] == playlist_name and playlist["owner"]["id"] == my_id:
+            return playlist
+    return None
+
+
 def create_random_artist_playlist(playlist_name, list_type, tracks_per_artist=5, public=False, mode="random"):
     '''Get one of the artist lists of config.py (br | latina | geral), take TRACKS_PER_ARTIST random songs
         from each artist and put them all, shuffled, in a new playlist called PLAYLIST_NAME
+        (when PLAYLIST_NAME is None, it is 'This is ..  br' | 'This is ..  latina' | 'This is ..')
+        If the user already has a playlist called PLAYLIST_NAME, its songs are replaced instead of creating a new one
         MODE: 'random' (random songs) | 'latest' (the TRACKS_PER_ARTIST most recent songs of each artist)'''
 
-    sp = config.connect("playlist-modify-public playlist-modify-private")
+    playlist_name = playlist_name or DEFAULT_NAMES[list_type]
+    sp = config.connect("playlist-read-private playlist-modify-public playlist-modify-private")
     artist_list = ARTIST_LISTS[list_type]()
 
     print(f"Getting {tracks_per_artist} {mode} songs from {len(artist_list)} artists ({list_type})...")
@@ -83,20 +96,29 @@ def create_random_artist_playlist(playlist_name, list_type, tracks_per_artist=5,
         return
     random.shuffle(track_uris)
 
-    # POST /me/playlists and /playlists/{id}/items: endpoints of the Feb/2026 Spotify API
-    playlist = sp._post("me/playlists", payload={
+    details = {
         "name": playlist_name,
         "public": public,
-        "description": f"{tracks_per_artist} {mode} songs from each artist of the '{list_type}' list"})
-    for i in range(0, len(track_uris), 100): # spotify allow to add only 100 per time
+        "description": f"{tracks_per_artist} {mode} songs from each artist of the '{list_type}' list"}
+    # /me/playlists, /playlists/{id} and /playlists/{id}/items: endpoints of the Feb/2026 Spotify API
+    playlist = find_my_playlist(sp, playlist_name)
+    if playlist: # update it: new details and the PUT replaces all its songs by the first 100
+        sp._put(f"playlists/{playlist['id']}", payload=details)
+        sp._put(f"playlists/{playlist['id']}/items", payload={"uris": track_uris[:100]})
+        action = "updated"
+    else:
+        playlist = sp._post("me/playlists", payload=details)
+        sp._post(f"playlists/{playlist['id']}/items", payload={"uris": track_uris[:100]})
+        action = "created"
+    for i in range(100, len(track_uris), 100): # spotify allow to add only 100 per time
         sp._post(f"playlists/{playlist['id']}/items", payload={"uris": track_uris[i:i+100]})
 
-    print(f"\nPlaylist '{playlist_name}' created with {len(track_uris)} songs: {playlist['external_urls']['spotify']}")
+    print(f"\nPlaylist '{playlist_name}' {action} with {len(track_uris)} songs: {playlist['external_urls']['spotify']}")
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Create a playlist with random songs from one of the artist lists of config.py")
-    parser.add_argument("name", help="name of the new playlist")
+    parser.add_argument("name", nargs="?", default=None, help="name of the new playlist (default: 'This is ..  br' | 'This is ..  latina' | 'This is ..', from the list)")
     parser.add_argument("list", choices=ARTIST_LISTS.keys(), help="which artist list to use")
     parser.add_argument("-n", "--tracks", type=int, default=5, help="songs per artist (default: 5)")
     parser.add_argument("--public", action="store_true", help="create a public playlist (default: private)")
